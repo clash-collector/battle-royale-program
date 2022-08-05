@@ -9,6 +9,11 @@ pub struct CreateBattlegroundEvent {
 pub struct JoinBattlegroundEvent {
     pub battleground: Pubkey,
     pub nft_mint: Pubkey,
-    pub attack: u16,
-    pub defense: u16,
+    pub attack: u32,
+    pub defense: u32,
+}
+
+#[event]
+pub struct BattleStartEvent {
+    pub battleground: Pubkey,
 }

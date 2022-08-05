@@ -1,10 +1,15 @@
 use crate::constants::*;
+use crate::events::BattleStartEvent;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn start_battle(ctx: Context<StartBattle>) -> Result<()> {
     ctx.accounts.battleground_state.status = BattlegroundStatus::Ongoing;
     ctx.accounts.battleground_state.start_time = ctx.accounts.clock.unix_timestamp;
+
+    emit!(BattleStartEvent {
+        battleground: ctx.accounts.battleground_state.key()
+    });
 
     Ok(())
 }

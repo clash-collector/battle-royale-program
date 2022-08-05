@@ -105,7 +105,7 @@ describe("Join a Battleground", () => {
     );
     expect(state.nftMint.toString()).to.equal(participant.nft.toString());
     expect(state.attack).to.equal(100 + attack);
-    expect(state.defense).to.equal(defense);
+    expect(state.defense).to.equal(50 + defense);
     expect(state.dead).to.equal(false);
     expect(
       (

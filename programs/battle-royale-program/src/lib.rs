@@ -40,8 +40,8 @@ pub mod battle_royale_program {
 
     pub fn join_battleground(
         ctx: Context<JoinBattleground>,
-        attack: u16,
-        defense: u16,
+        attack: u32,
+        defense: u32,
         whitelist_root: Option<Vec<[u8; 32]>>,
     ) -> Result<()> {
         instructions::join_battleground(ctx, attack, defense, whitelist_root)
@@ -54,7 +54,7 @@ pub mod battle_royale_program {
     pub fn participant_action(
         ctx: Context<ParticipantAction>,
         action_type: ActionType,
-        action_points: u8,
+        action_points: u32,
     ) -> Result<()> {
         instructions::participant_action(ctx, action_type, action_points)
     }

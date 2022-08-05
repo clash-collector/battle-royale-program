@@ -13,4 +13,7 @@ pub enum BattleRoyaleError {
 
     #[msg("Failed collection verification")]
     CollectionVerificationFailed,
+
+    #[msg("Not enough action points")]
+    InsufficientActionPoints,
 }

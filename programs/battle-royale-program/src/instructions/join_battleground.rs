@@ -10,8 +10,8 @@ use anchor_spl::token::*;
 
 pub fn join_battleground(
     ctx: Context<JoinBattleground>,
-    attack: u16,
-    defense: u16,
+    attack: u32,
+    defense: u32,
     _whitelist_proof: Option<Vec<[u8; 32]>>,
 ) -> Result<()> {
     require!(
@@ -24,7 +24,7 @@ pub fn join_battleground(
         battleground: ctx.accounts.battleground_state.key(),
         nft_mint: ctx.accounts.nft_mint.key(),
         attack: 100 + attack,
-        defense,
+        defense: 50 + defense,
         action_points_spent: 0,
         health_points: 1000 + defense * 5,
         dead: false,
@@ -71,7 +71,7 @@ pub fn join_battleground(
 }
 
 #[derive(Accounts)]
-#[instruction(_attack: u16, _defense: u16, whitelist_proof: Option<Vec<[u8; 32]>>)]
+#[instruction(_attack: u32, _defense: u32, whitelist_proof: Option<Vec<[u8; 32]>>)]
 pub struct JoinBattleground<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,

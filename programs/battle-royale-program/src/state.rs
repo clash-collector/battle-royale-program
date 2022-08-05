@@ -52,13 +52,13 @@ pub struct ParticipantState {
     pub bump: u8,
     pub battleground: Pubkey,
     pub nft_mint: Pubkey,
-    pub attack: u16,
-    pub defense: u16,
-    pub health_points: u16,
-    pub action_points_spent: u16,
+    pub attack: u32,
+    pub defense: u32,
+    pub health_points: u32,
+    pub action_points_spent: u32,
     pub dead: bool,
 }
 
 impl ParticipantState {
-    pub const LEN: usize = 8 + 1 + 32 + 32 + 2 + 2 + 2 + 2 + 1;
+    pub const LEN: usize = 8 + 1 + 2 * 32 + 4 * 4 + 1;
 }

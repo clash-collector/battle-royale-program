@@ -46,7 +46,7 @@ describe("Participant action", () => {
   let entryFee = new anchor.BN(100);
   let attack = 50;
   let defense = 50;
-  let actionPointsPerDay = 86400;
+  let actionPointsPerDay = 864000;
   let collectionInfo: CollectionInfo;
 
   before(async () => {

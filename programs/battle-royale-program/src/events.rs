@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::state::ActionType;
+
 #[event]
 pub struct CreateBattlegroundEvent {
     pub battleground: Pubkey,
@@ -14,6 +16,14 @@ pub struct JoinBattlegroundEvent {
 }
 
 #[event]
-pub struct BattleStartEvent {
+pub struct StartBattleEvent {
     pub battleground: Pubkey,
+}
+
+#[event]
+pub struct ParticipantActionEvent {
+    pub battleground: Pubkey,
+    pub participant: Pubkey,
+    pub action_type: ActionType,
+    pub action_points_spent: u32,
 }

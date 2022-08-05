@@ -16,4 +16,7 @@ pub enum BattleRoyaleError {
 
     #[msg("Not enough action points")]
     InsufficientActionPoints,
+
+    #[msg("Wrong battleground status")]
+    WrongBattlegroundStatus,
 }

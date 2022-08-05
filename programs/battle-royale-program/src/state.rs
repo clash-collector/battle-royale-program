@@ -26,7 +26,6 @@ pub enum BattlegroundStatus {
 pub enum ActionType {
     Attack = 0,
     Heal = 1,
-    Flee = 2,
 }
 
 #[account]

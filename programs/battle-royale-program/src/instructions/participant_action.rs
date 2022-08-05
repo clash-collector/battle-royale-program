@@ -1,21 +1,58 @@
+use crate::common::action_points_available;
 use crate::constants::*;
+use crate::errors::*;
+use crate::events::ParticipantActionEvent;
 use crate::state::*;
 use anchor_lang::prelude::*;
+use anchor_spl::token::*;
 
 pub fn participant_action(
     ctx: Context<ParticipantAction>,
     action_type: ActionType,
-    action_points: u8,
+    action_points: u32,
 ) -> Result<()> {
-    let attack = ctx.accounts.participant_state.attack;
-    let hp_left = ctx.accounts.target_participant_state.defense;
+    let participant = &mut ctx.accounts.participant_state;
+    let target = &mut ctx.accounts.target_participant_state;
 
-    if hp_left > attack {
-        ctx.accounts.target_participant_state.defense -= attack;
-    } else {
-        ctx.accounts.target_participant_state.defense = 0;
-        ctx.accounts.target_participant_state.dead = true;
-    }
+    require!(
+        action_points_available(
+            ctx.accounts.battleground_state.start_time,
+            ctx.accounts.clock.unix_timestamp,
+            ctx.accounts.battleground_state.action_points_per_day,
+        ) - participant.action_points_spent
+            >= action_points,
+        BattleRoyaleError::InsufficientActionPoints
+    );
+
+    participant.action_points_spent += action_points;
+
+    match action_type {
+        ActionType::Attack => {
+            let damage = participant.attack * action_points;
+            if damage >= target.health_points {
+                target.dead = true;
+                target.health_points = 0;
+                ctx.accounts.battleground_state.participants -= 1;
+            } else {
+                target.health_points -= damage;
+            }
+        }
+        ActionType::Heal => {
+            let heal = participant.defense * action_points / 2;
+            target.health_points = if target.health_points + heal > 750 + target.defense * 5 {
+                750 + target.defense * 5
+            } else {
+                target.health_points + heal
+            };
+        }
+    };
+
+    emit!(ParticipantActionEvent {
+        battleground: ctx.accounts.battleground_state.key(),
+        participant: ctx.accounts.participant_state.key(),
+        action_type,
+        action_points_spent: action_points
+    });
 
     Ok(())
 }
@@ -43,31 +80,40 @@ pub struct ParticipantAction<'info> {
             battleground_state.id.to_be_bytes().as_ref(),
         ],
         bump,
-        constraint = battleground_state.participants < battleground_state.participants_cap
+        constraint = battleground_state.status == BattlegroundStatus::Ongoing,
     )]
     pub battleground_state: Account<'info, BattlegroundState>,
 
     #[account(
+        mut,
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
             battleground_state.key().as_ref(),
             participant_state.nft_mint.as_ref(),
         ],
         bump,
+        constraint = !participant_state.dead,
     )]
     pub participant_state: Account<'info, ParticipantState>,
 
     #[account(
+        mut,
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
             battleground_state.key().as_ref(),
             target_participant_state.nft_mint.as_ref(),
         ],
         bump,
+        constraint = !participant_state.dead,
     )]
     pub target_participant_state: Account<'info, ParticipantState>,
 
-    // Solana ecosystem program addresses
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
+    #[account(
+        constraint = player_nft_token_account.owner == signer.key(),
+        constraint = player_nft_token_account.mint == participant_state.nft_mint,
+        constraint = player_nft_token_account.amount == 1,
+    )]
+    pub player_nft_token_account: Box<Account<'info, TokenAccount>>,
+
+    pub clock: Sysvar<'info, Clock>,
 }

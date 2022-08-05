@@ -18,3 +18,9 @@ export enum BattlegroundStatus {
   Ongoing = "ongoing",
   Finished = "finished",
 }
+
+export declare type ActionType = anchor.IdlTypes<BattleRoyaleProgram>["ActionType"];
+// export enum ActionType {
+//   Attack = "attack",
+//   Heal = "heal",
+// }

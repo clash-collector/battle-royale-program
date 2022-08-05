@@ -11,6 +11,7 @@ import {
 } from "@solana/spl-token";
 import Battleground, { BattlegroundAddresses } from "./battleground";
 import { getMerkleProof, getTokenMetadata } from "./utils";
+import { ActionType } from "./types";
 
 export interface ParticipantAddresses extends BattlegroundAddresses {
   participant: anchor.web3.PublicKey;
@@ -78,6 +79,28 @@ class Participant {
         devAccount,
         playerAccount,
         playerNftTokenAccount,
+      })
+      .rpc();
+    await this.provider.connection.confirmTransaction(tx);
+  }
+
+  async action(target: Participant, actionType: ActionType, actionPoints: number) {
+    const playerNftTokenAccount = await getAssociatedTokenAddress(
+      this.nft,
+      this.provider.publicKey,
+      true
+    );
+
+    const tx = await this.program.methods
+      .participantAction(actionType, actionPoints)
+      .accounts({
+        signer: this.provider.publicKey,
+        battleRoyaleState: this.addresses.battleRoyale,
+        battlegroundState: this.addresses.battleground,
+        participantState: this.addresses.participant,
+        targetParticipantState: target.addresses.participant,
+        playerNftTokenAccount,
+        clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       })
       .rpc();
     await this.provider.connection.confirmTransaction(tx);

@@ -23,10 +23,10 @@ pub fn join_battleground(
         bump: *ctx.bumps.get("participant_state").unwrap(),
         battleground: ctx.accounts.battleground_state.key(),
         nft_mint: ctx.accounts.nft_mint.key(),
-        attack: 100 + attack,
-        defense: 50 + defense,
+        attack: attack + 100,
+        defense: defense + 50,
         action_points_spent: 0,
-        health_points: 1000 + defense * 5,
+        health_points: 750 + (defense + 50) * 5,
         dead: false,
     };
     ctx.accounts.battleground_state.participants += 1;
@@ -111,7 +111,8 @@ pub struct JoinBattleground<'info> {
         ],
         bump,
         has_one = pot_mint,
-        constraint = battleground_state.participants < battleground_state.participants_cap
+        constraint = battleground_state.participants < battleground_state.participants_cap,
+        constraint = battleground_state.status == BattlegroundStatus::Preparing @ BattleRoyaleError::WrongBattlegroundStatus,
     )]
     pub battleground_state: Account<'info, BattlegroundState>,
 

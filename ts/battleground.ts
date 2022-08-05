@@ -10,6 +10,7 @@ import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
 import BattleRoyale, { BattleRoyaleAddresses } from "./battleRoyale";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";
+import { getAccount } from "@solana/spl-token";
 
 export interface BattlegroundAddresses extends BattleRoyaleAddresses {
   authority: anchor.web3.PublicKey;

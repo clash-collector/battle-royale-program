@@ -40,10 +40,11 @@ pub struct BattlegroundState {
     pub status: BattlegroundStatus,
     pub pot_mint: Pubkey,
     pub entry_fee: u64,
+    pub last_winner: Option<Pubkey>,
 }
 
 impl BattlegroundState {
-    pub const LEN: usize = 8 + 1 + 8 + (CollectionInfo::LEN) + 4 + 4 + 2 + 32 + 8;
+    pub const LEN: usize = 8 + 1 + 8 + (CollectionInfo::LEN) + 4 + 4 + 2 + 32 + 8 + 33;
 }
 
 #[account]

@@ -27,3 +27,11 @@ pub struct ParticipantActionEvent {
     pub action_type: ActionType,
     pub action_points_spent: u32,
 }
+
+#[event]
+pub struct FinishBattleEvent {
+    pub battleground: Pubkey,
+    pub winner: Pubkey,
+    pub pot_mint: Pubkey,
+    pub pot_amount: u64,
+}

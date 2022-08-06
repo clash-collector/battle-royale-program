@@ -1,24 +1,9 @@
 import * as anchor from "@project-serum/anchor";
-import {
-  createMint,
-  getAccount,
-  getAssociatedTokenAddress,
-  getOrCreateAssociatedTokenAccount,
-  mintTo,
-  mintToChecked,
-  TokenInstruction,
-} from "@solana/spl-token";
+import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { expect } from "chai";
-import MerkleTree from "merkletreejs";
-import {
-  Battleground,
-  BattleRoyale,
-  CollectionInfo,
-  mintNft,
-  mintToken,
-  verifyCollection,
-} from "../ts";
+import { Battleground, BattleRoyale, CollectionInfo } from "battle-royale-ts";
 import { airdropWallets, defaultProvider, smbMints } from "./common";
+import { mintNft, mintToken, verifyCollection } from "./utils";
 
 describe("Join a Battleground", () => {
   const nftSymbol = "DAPE";
@@ -39,7 +24,7 @@ describe("Join a Battleground", () => {
   let battleground: Battleground;
   let fee: number;
   let participantsCap = 100;
-  let initialAmount = new anchor.BN(10000);
+  let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
   let actionPointsPerDay = 10;
   let collectionInfo: CollectionInfo;
@@ -51,7 +36,6 @@ describe("Join a Battleground", () => {
 
     /// Create the pot token and mint some to the player
     potMint = (await mintToken(provider, creator.payer, player.publicKey, initialAmount)).mint;
-
     // Create the collection
     const { mint: collection } = await mintNft(
       provider,
@@ -60,7 +44,6 @@ describe("Join a Battleground", () => {
       player.publicKey
     );
     collectionMint = collection;
-
     const { mint } = await mintNft(
       provider,
       nftSymbol,
@@ -96,7 +79,7 @@ describe("Join a Battleground", () => {
     let attack = 50;
     let defense = 50;
     const participant = await battleground
-      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+      .connect(new anchor.AnchorProvider(provider.connection, player, { commitment: "processed" }))
       .join(nftMint, attack, defense);
     const state = await participant.getParticipantState();
 
@@ -114,9 +97,7 @@ describe("Join a Battleground", () => {
           await getAssociatedTokenAddress(potMint, player.publicKey)
         )
       ).amount.toString()
-    ).to.equal(
-      initialAmount.sub(initialAmount.mul(new anchor.BN(fee)).div(new anchor.BN(10000))).toString()
-    );
+    ).to.equal((initialAmount - (initialAmount * fee) / 10000).toString());
 
     expect((await battleground.getBattlegroundState()).participants).to.equal(1);
   });

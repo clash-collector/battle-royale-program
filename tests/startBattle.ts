@@ -1,26 +1,8 @@
 import * as anchor from "@project-serum/anchor";
-import {
-  createMint,
-  getAccount,
-  getAssociatedTokenAddress,
-  getOrCreateAssociatedTokenAccount,
-  mintTo,
-  mintToChecked,
-  TokenInstruction,
-} from "@solana/spl-token";
 import { expect } from "chai";
-import MerkleTree from "merkletreejs";
-import {
-  Battleground,
-  BattlegroundStatus,
-  BattleRoyale,
-  CollectionInfo,
-  mintNft,
-  mintToken,
-  Participant,
-  verifyCollection,
-} from "../ts";
-import { airdropWallets, defaultProvider, smbMints } from "./common";
+import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo } from "battle-royale-ts";
+import { mintNft, mintToken, verifyCollection } from "./utils";
+import { airdropWallets } from "./common";
 
 describe("Start a Battleground", () => {
   const nftSymbol = "DAPE";
@@ -36,7 +18,7 @@ describe("Start a Battleground", () => {
   let battleground: Battleground;
   let fee: number;
   let participantsCap = 1;
-  let initialAmount = new anchor.BN(10000);
+  let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
   let actionPointsPerDay = 10;
   let collectionInfo: CollectionInfo;

@@ -3,6 +3,7 @@ import {
   createAssociatedTokenAccount,
   createMint,
   getAccount,
+  mintTo,
   mintToChecked,
 } from "@solana/spl-token";
 import {
@@ -157,9 +158,9 @@ export const mintNft = async (
 
 export const mintToken = async (
   provider: anchor.Provider,
-  creator: anchor.web3.Keypair,
+  creator: anchor.web3.Signer,
   destination: anchor.web3.PublicKey,
-  initialSupply: anchor.BN,
+  initialSupply: number | bigint,
   decimals: number = 8
 ) => {
   const mint = await createMint(provider.connection, creator, creator.publicKey, null, decimals);
@@ -171,15 +172,7 @@ export const mintToken = async (
     destination
   );
 
-  await mintToChecked(
-    provider.connection,
-    creator,
-    mint,
-    tokenAccount,
-    creator.publicKey,
-    initialSupply.toNumber(),
-    decimals
-  );
+  await mintTo(provider.connection, creator, mint, tokenAccount, creator, initialSupply);
 
   return { mint, tokenAccount };
 };

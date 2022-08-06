@@ -16,9 +16,6 @@ pub fn start_battle(ctx: Context<StartBattle>) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct StartBattle<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
-
     #[account(
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
@@ -37,7 +34,8 @@ pub struct StartBattle<'info> {
             battleground_state.id.to_be_bytes().as_ref(),
         ],
         bump,
-        constraint = battleground_state.participants == battleground_state.participants_cap
+        constraint = battleground_state.status == BattlegroundStatus::Preparing,
+        constraint = battleground_state.participants == battleground_state.participants_cap,
     )]
     pub battleground_state: Account<'info, BattlegroundState>,
 

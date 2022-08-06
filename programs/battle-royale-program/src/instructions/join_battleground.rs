@@ -118,7 +118,7 @@ pub struct JoinBattleground<'info> {
 
     /// The participant state
     #[account(
-        init,
+        init_if_needed,
         payer = signer,
         space = ParticipantState::LEN,
         seeds = [
@@ -127,6 +127,7 @@ pub struct JoinBattleground<'info> {
             nft_mint.key().as_ref(),
         ],
         bump,
+        constraint = !participant_state.dead
     )]
     pub participant_state: Account<'info, ParticipantState>,
 

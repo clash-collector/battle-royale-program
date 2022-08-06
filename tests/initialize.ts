@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
-import { BattleRoyale } from "../ts";
+import { BattleRoyale } from "battle-royale-ts";
 import { airdropWallets, defaultProvider } from "./common";
 
 describe("Initializing a Battle Royale", () => {

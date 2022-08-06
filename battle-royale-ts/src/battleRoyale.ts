@@ -1,8 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { Program, SystemProgram } from "@project-serum/anchor";
 import { BATTLE_ROYALE_PROGRAM_ID, BATTLE_ROYALE_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
 import Battleground from "./battleground";
 import { CollectionInfo } from "./types";
 
@@ -25,6 +25,11 @@ class BattleRoyale {
         BATTLE_ROYALE_PROGRAM_ID
       )[0],
     };
+  }
+
+  static fetch(provider: anchor.AnchorProvider) {
+    const battleRoyale = new BattleRoyale(provider.publicKey, provider);
+    return battleRoyale;
   }
 
   async initialize(fee: number) {

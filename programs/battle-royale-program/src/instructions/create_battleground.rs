@@ -48,6 +48,7 @@ pub fn create_battleground(
         status: BattlegroundStatus::Preparing,
         pot_mint: ctx.accounts.pot_mint.key(),
         entry_fee,
+        last_winner: None,
     };
 
     ctx.accounts.battle_royale_state.last_battleground_id += 1;

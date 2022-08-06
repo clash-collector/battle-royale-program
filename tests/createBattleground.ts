@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { createMint, getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
 import {
   Battleground,
@@ -7,7 +7,7 @@ import {
   BattlegroundStatus,
   getMerkleTree,
   CollectionInfo,
-} from "../ts";
+} from "battle-royale-ts";
 import { airdropWallets, defaultProvider, smbMints } from "./common";
 
 describe("Create a Battleground", () => {
@@ -60,7 +60,7 @@ describe("Create a Battleground", () => {
       const state = await battleground.getBattlegroundState();
 
       expect(state.id.toString()).to.equal("0");
-      expect(state.collectionInfo).to.deep.equal(collectionInfo);
+      expect(JSON.stringify(state.collectionInfo)).to.deep.equal(JSON.stringify(collectionInfo));
       expect(state.actionPointsPerDay).to.equal(actionPointsPerDay);
       expect(state.participantsCap).to.equal(participantsCap);
       expect(state.entryFee.toString()).to.equal(entryFee.toString());

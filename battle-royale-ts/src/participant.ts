@@ -1,8 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { BATTLE_ROYALE_PROGRAM_ID, PARTICIPANT_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAccount,
@@ -106,12 +106,47 @@ class Participant {
     await this.provider.connection.confirmTransaction(tx);
   }
 
+  async finishBattle() {
+    const potAccount = await getAssociatedTokenAddress(
+      this.addresses.potMint,
+      this.addresses.authority,
+      true
+    );
+    const winnerAccount = await getAssociatedTokenAddress(
+      this.addresses.potMint,
+      this.provider.publicKey,
+      true
+    );
+    const winnerNftTokenAccount = await getAssociatedTokenAddress(
+      this.nft,
+      this.provider.publicKey,
+      true
+    );
+
+    const tx = await this.program.methods
+      .finishBattle()
+      .accounts({
+        battleRoyaleState: this.addresses.battleRoyale,
+        battlegroundState: this.addresses.battleground,
+        participantState: this.addresses.participant,
+        winner: this.provider.publicKey,
+        nftMint: this.nft,
+        potMint: this.addresses.potMint,
+        potAccount,
+        winnerAccount,
+        winnerNftTokenAccount,
+      })
+      .rpc();
+    await this.provider.connection.confirmTransaction(tx);
+  }
+
   async getParticipantState() {
     return await this.program.account.participantState.fetch(this.addresses.participant);
   }
 
   connect(provider: anchor.AnchorProvider) {
     this.provider = new anchor.AnchorProvider(provider.connection, provider.wallet, {});
+    this.provider.connection.getLatestBlockhash();
     this.program = new Program<BattleRoyaleProgram>(
       BattleRoyaleIdl as any,
       BATTLE_ROYALE_PROGRAM_ID,

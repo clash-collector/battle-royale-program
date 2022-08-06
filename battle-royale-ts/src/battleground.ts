@@ -1,16 +1,15 @@
 import * as anchor from "@project-serum/anchor";
-import { Program, SystemProgram } from "@project-serum/anchor";
+import { Program } from "@project-serum/anchor";
 import {
   BATTLEGROUND_STATE_SEEDS,
   BATTLEGROUND_AUTHORITY_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
 } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
 import BattleRoyale, { BattleRoyaleAddresses } from "./battleRoyale";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";
-import { getAccount } from "@solana/spl-token";
 
 export interface BattlegroundAddresses extends BattleRoyaleAddresses {
   authority: anchor.web3.PublicKey;
@@ -102,6 +101,7 @@ class Battleground {
 
   connect(provider: anchor.AnchorProvider) {
     this.provider = new anchor.AnchorProvider(provider.connection, provider.wallet, {});
+    this.provider.connection.getLatestBlockhash();
     this.program = new Program<BattleRoyaleProgram>(
       BattleRoyaleIdl as any,
       BATTLE_ROYALE_PROGRAM_ID,

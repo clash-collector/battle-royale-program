@@ -58,4 +58,8 @@ pub mod battle_royale_program {
     ) -> Result<()> {
         instructions::participant_action(ctx, action_type, action_points)
     }
+
+    pub fn finish_battle(ctx: Context<FinishBattle>) -> Result<()> {
+        instructions::finish_battle(ctx)
+    }
 }

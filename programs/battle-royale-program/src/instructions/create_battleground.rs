@@ -71,9 +71,8 @@ pub struct CreateBattleground<'info> {
         mut,
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            battle_royale_state.game_master.as_ref(),
         ],
-        bump = battle_royale_state.bump,
+        bump,
     )]
     pub battle_royale_state: Account<'info, BattleRoyaleState>,
 
@@ -82,7 +81,6 @@ pub struct CreateBattleground<'info> {
     #[account(
         seeds = [
             BATTLEGROUND_AUTHORITY_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
             battle_royale_state.last_battleground_id.to_le_bytes().as_ref()
         ],
         bump,
@@ -96,7 +94,6 @@ pub struct CreateBattleground<'info> {
         space = BattlegroundState::LEN,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
             battle_royale_state.last_battleground_id.to_le_bytes().as_ref()
         ],
         bump,

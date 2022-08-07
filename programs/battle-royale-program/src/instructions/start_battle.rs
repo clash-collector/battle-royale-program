@@ -1,14 +1,15 @@
 use crate::constants::*;
+use crate::errors::*;
 use crate::events::StartBattleEvent;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
 pub fn start_battle(ctx: Context<StartBattle>) -> Result<()> {
-    ctx.accounts.battleground_state.status = BattlegroundStatus::Ongoing;
-    ctx.accounts.battleground_state.start_time = ctx.accounts.clock.unix_timestamp;
+    ctx.accounts.battleground.status = BattlegroundStatus::Ongoing;
+    ctx.accounts.battleground.start_time = ctx.accounts.clock.unix_timestamp;
 
     emit!(StartBattleEvent {
-        battleground: ctx.accounts.battleground_state.key()
+        battleground: ctx.accounts.battleground.key()
     });
 
     Ok(())
@@ -19,25 +20,23 @@ pub struct StartBattle<'info> {
     #[account(
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            battle_royale_state.game_master.as_ref(),
         ],
         bump,
     )]
-    pub battle_royale_state: Account<'info, BattleRoyaleState>,
+    pub battle_royale: Account<'info, BattleRoyaleState>,
 
     /// The battleground the participant is entering
     #[account(
         mut,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground.id.to_le_bytes().as_ref(),
         ],
         bump,
-        constraint = battleground_state.status == BattlegroundStatus::Preparing,
-        constraint = battleground_state.participants == battleground_state.participants_cap,
+        constraint = battleground.status == BattlegroundStatus::Preparing @ BattleRoyaleError::WrongBattlegroundStatus,
+        constraint = battleground.participants == battleground.participants_cap,
     )]
-    pub battleground_state: Account<'info, BattlegroundState>,
+    pub battleground: Account<'info, BattlegroundState>,
 
     pub clock: Sysvar<'info, Clock>,
 }

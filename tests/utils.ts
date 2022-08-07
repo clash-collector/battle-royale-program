@@ -15,6 +15,8 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import keccak256 from "keccak256";
 import MerkleTree from "merkletreejs";
+import { assert } from "chai";
+import { gameMaster } from "./common";
 
 export const getMerkleTree = (mints: anchor.web3.PublicKey[]) => {
   const leaves = mints.map((x) => keccak256(x.toBuffer()));
@@ -53,7 +55,7 @@ export const getTokenEdition = (tokenMint: anchor.web3.PublicKey) => {
 export const mintNft = async (
   provider: anchor.Provider,
   symbol: string,
-  creator: anchor.web3.Keypair,
+  creator: anchor.web3.Signer,
   destination: anchor.web3.PublicKey,
   collectionMint?: anchor.web3.PublicKey,
   v1: boolean = false
@@ -181,7 +183,7 @@ export const verifyCollection = async (
   provider: anchor.AnchorProvider,
   nftMint: anchor.web3.PublicKey,
   collectionMint: anchor.web3.PublicKey,
-  collectionAuthority: anchor.web3.Keypair
+  collectionAuthority: anchor.web3.Signer
 ) => {
   // Setup: Verify collection of the NFT
   const transaction = new anchor.web3.Transaction();
@@ -197,3 +199,44 @@ export const verifyCollection = async (
   );
   return provider.sendAndConfirm(transaction, [collectionAuthority]);
 };
+
+export async function mintCollection(
+  provider: anchor.AnchorProvider,
+  nftSymbol: string,
+  collectionOwner: anchor.web3.Signer,
+  holders: anchor.web3.PublicKey[],
+  amount: number = 0
+) {
+  if (holders.length === 0) throw new Error("No holders");
+
+  // Create the collection
+  const { mint: collectionMint } = await mintNft(
+    provider,
+    nftSymbol,
+    collectionOwner,
+    collectionOwner.publicKey
+  );
+
+  // Create tokens
+  const mints: anchor.web3.PublicKey[] = [];
+  for (let i = 0; i < Math.max(holders.length, amount); i++) {
+    const { mint } = await mintNft(
+      provider,
+      nftSymbol,
+      collectionOwner,
+      holders[i % holders.length],
+      collectionMint
+    );
+    await verifyCollection(provider, mint, collectionMint, collectionOwner);
+    mints.push(mint);
+  }
+
+  return { mints, collectionMint };
+}
+
+export async function expectRevert(promise: Promise<any>) {
+  try {
+    await promise;
+    assert(false);
+  } catch (e) {}
+}

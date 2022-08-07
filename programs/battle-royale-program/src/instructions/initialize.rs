@@ -4,12 +4,16 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::*;
 use anchor_spl::token::*;
 
-pub fn initialize(ctx: Context<Initialize>, fee: u16) -> Result<()> {
+pub fn initialize(ctx: Context<Initialize>, game_master: Pubkey, fee: u16) -> Result<()> {
     *ctx.accounts.battle_royale_state = BattleRoyaleState {
         bump: *ctx.bumps.get("battle_royale_state").unwrap(),
-        game_master: ctx.accounts.game_master.key(),
+        game_master,
         fee,
-        last_battleground_id: 0,
+        last_battleground_id: if ctx.accounts.battle_royale_state.game_master != Pubkey::default() {
+            ctx.accounts.battle_royale_state.last_battleground_id
+        } else {
+            0
+        },
     };
 
     Ok(())
@@ -18,17 +22,17 @@ pub fn initialize(ctx: Context<Initialize>, fee: u16) -> Result<()> {
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
-    pub game_master: Signer<'info>,
+    pub signer: Signer<'info>,
 
     #[account(
-        init,
-        payer = game_master,
+        init_if_needed,
+        payer = signer,
         space = BattleRoyaleState::LEN,
         seeds = [
-            BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            game_master.key().as_ref(),
+            BATTLE_ROYALE_STATE_SEEDS.as_bytes()
         ],
-        bump
+        bump,
+        constraint = signer.key() == battle_royale_state.game_master || battle_royale_state.game_master == Pubkey::default()
     )]
     pub battle_royale_state: Account<'info, BattleRoyaleState>,
 

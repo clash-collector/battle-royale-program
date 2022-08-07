@@ -19,6 +19,10 @@ export enum BattlegroundStatus {
   Finished = "finished",
 }
 
+export declare type BattleRoyaleAccount =
+  anchor.IdlAccounts<BattleRoyaleProgram>["battleRoyaleState"];
+export declare type BattlegroundAccount =
+  anchor.IdlAccounts<BattleRoyaleProgram>["battlegroundState"];
 export declare type ActionType = anchor.IdlTypes<BattleRoyaleProgram>["ActionType"];
 // export enum ActionType {
 //   Attack = "attack",

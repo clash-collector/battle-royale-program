@@ -1,6 +1,10 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import { BATTLE_ROYALE_PROGRAM_ID, PARTICIPANT_STATE_SEEDS } from "./constants";
+import {
+  BATTLEGROUND_AUTHORITY_SEEDS,
+  BATTLE_ROYALE_PROGRAM_ID,
+  PARTICIPANT_STATE_SEEDS,
+} from "./constants";
 import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
 import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
 import {
@@ -10,7 +14,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import Battleground, { BattlegroundAddresses } from "./battleground";
-import { getMerkleProof, getTokenMetadata } from "./utils";
+import { getTokenMetadata } from "./utils";
 import { ActionType } from "./types";
 
 export interface ParticipantAddresses extends BattlegroundAddresses {
@@ -44,16 +48,14 @@ class Participant {
   }
 
   async join(attack: number, defense: number, whitelistProof: number[][] | null = null) {
+    const gameMaster = (await this.battleground.battleRoyale.getBattleRoyaleState()).gameMaster;
+
     const potAccount = await getAssociatedTokenAddress(
       this.addresses.potMint,
       this.addresses.authority,
       true
     );
-    const devAccount = await getAssociatedTokenAddress(
-      this.addresses.potMint,
-      this.addresses.gameMaster,
-      true
-    );
+    const devAccount = await getAssociatedTokenAddress(this.addresses.potMint, gameMaster, true);
     const playerAccount = await getAssociatedTokenAddress(
       this.addresses.potMint,
       this.provider.publicKey,
@@ -69,9 +71,11 @@ class Participant {
       .joinBattleground(attack, defense, whitelistProof)
       .accounts({
         signer: this.provider.publicKey,
-        gameMaster: this.addresses.gameMaster,
-        battleRoyaleState: this.addresses.battleRoyale,
-        battlegroundState: this.addresses.battleground,
+        gameMaster,
+        battleRoyale: this.addresses.battleRoyale,
+        authority: this.addresses.authority,
+        battleground: this.addresses.battleground,
+        participant: this.addresses.participant,
         potMint: this.addresses.potMint,
         nftMint: this.nft,
         nftMetadata: this.nftMetadata,
@@ -126,9 +130,10 @@ class Participant {
     const tx = await this.program.methods
       .finishBattle()
       .accounts({
-        battleRoyaleState: this.addresses.battleRoyale,
-        battlegroundState: this.addresses.battleground,
-        participantState: this.addresses.participant,
+        battleRoyale: this.addresses.battleRoyale,
+        battleground: this.addresses.battleground,
+        authority: this.addresses.authority,
+        participant: this.addresses.participant,
         winner: this.provider.publicKey,
         nftMint: this.nft,
         potMint: this.addresses.potMint,
@@ -136,7 +141,7 @@ class Participant {
         winnerAccount,
         winnerNftTokenAccount,
       })
-      .rpc();
+      .rpc({ skipPreflight: true });
     await this.provider.connection.confirmTransaction(tx);
   }
 

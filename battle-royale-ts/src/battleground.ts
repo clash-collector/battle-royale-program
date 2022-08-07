@@ -36,19 +36,11 @@ class Battleground {
     this.addresses = {
       ...battleRoyale.addresses,
       authority: anchor.web3.PublicKey.findProgramAddressSync(
-        [
-          BATTLEGROUND_AUTHORITY_SEEDS,
-          battleRoyale.addresses.battleRoyale.toBuffer(),
-          new anchor.BN(id).toBuffer("le", 8),
-        ],
+        [BATTLEGROUND_AUTHORITY_SEEDS, new anchor.BN(id).toBuffer("le", 8)],
         BATTLE_ROYALE_PROGRAM_ID
       )[0],
       battleground: anchor.web3.PublicKey.findProgramAddressSync(
-        [
-          BATTLEGROUND_STATE_SEEDS,
-          battleRoyale.addresses.battleRoyale.toBuffer(),
-          new anchor.BN(id).toBuffer("le", 8),
-        ],
+        [BATTLEGROUND_STATE_SEEDS, new anchor.BN(id).toBuffer("le", 8)],
         BATTLE_ROYALE_PROGRAM_ID
       )[0],
       potMint,
@@ -87,8 +79,8 @@ class Battleground {
     const tx = await this.program.methods
       .startBattle()
       .accounts({
-        battleRoyaleState: this.addresses.battleRoyale,
-        battlegroundState: this.addresses.battleground,
+        battleRoyale: this.addresses.battleRoyale,
+        battleground: this.addresses.battleground,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       })
       .rpc();

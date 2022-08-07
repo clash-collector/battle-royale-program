@@ -18,8 +18,8 @@ pub mod battle_royale_program {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, fee: u16) -> Result<()> {
-        instructions::initialize(ctx, fee)
+    pub fn initialize(ctx: Context<Initialize>, game_master: Pubkey, fee: u16) -> Result<()> {
+        instructions::initialize(ctx, game_master, fee)
     }
 
     pub fn create_battleground(

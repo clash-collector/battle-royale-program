@@ -1,4 +1,5 @@
 use crate::constants::*;
+use crate::errors::*;
 use crate::events::FinishBattleEvent;
 use crate::state::*;
 use anchor_lang::prelude::*;
@@ -8,15 +9,14 @@ use anchor_spl::token::*;
 
 pub fn finish_battle(ctx: Context<FinishBattle>) -> Result<()> {
     // Reset the battleground
-    ctx.accounts.battleground_state.status = BattlegroundStatus::Preparing;
-    ctx.accounts.battleground_state.last_winner = Some(ctx.accounts.winner_nft_token_account.mint);
+    ctx.accounts.battleground.status = BattlegroundStatus::Preparing;
+    ctx.accounts.battleground.last_winner = Some(ctx.accounts.winner_nft_token_account.mint);
 
     // Get authority signer seeds
     let authority_bump = *ctx.bumps.get("authority").unwrap();
     let authority_seeds = &[
         BATTLEGROUND_AUTHORITY_SEEDS.as_bytes(),
-        &ctx.accounts.battle_royale_state.key().to_bytes(),
-        &ctx.accounts.battleground_state.id.to_be_bytes(),
+        &ctx.accounts.battleground.id.to_le_bytes(),
         &[authority_bump],
     ];
     let authority_signer_seeds = &[&authority_seeds[..]];
@@ -34,9 +34,9 @@ pub fn finish_battle(ctx: Context<FinishBattle>) -> Result<()> {
     token::transfer(transfer_nft_ctx, ctx.accounts.pot_account.amount)?;
 
     emit!(FinishBattleEvent {
-        battleground: ctx.accounts.battleground_state.key(),
-        winner: ctx.accounts.participant_state.key(),
-        pot_mint: ctx.accounts.battleground_state.pot_mint,
+        battleground: ctx.accounts.battleground.key(),
+        winner: ctx.accounts.participant.key(),
+        pot_mint: ctx.accounts.battleground.pot_mint,
         pot_amount: ctx.accounts.pot_account.amount,
     });
 
@@ -54,18 +54,16 @@ pub struct FinishBattle<'info> {
     #[account(
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            battle_royale_state.game_master.as_ref(),
         ],
         bump,
     )]
-    pub battle_royale_state: Box<Account<'info, BattleRoyaleState>>,
+    pub battle_royale: Box<Account<'info, BattleRoyaleState>>,
 
     /// CHECK: Checking correspondance with battle royale state
     #[account(
         seeds = [
             BATTLEGROUND_AUTHORITY_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground.id.to_le_bytes().as_ref(),
         ],
         bump,
     )]
@@ -76,28 +74,27 @@ pub struct FinishBattle<'info> {
         mut,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground.id.to_le_bytes().as_ref(),
         ],
         bump,
         has_one = pot_mint,
-        constraint = battleground_state.participants == 1,
-        constraint = battleground_state.status == BattlegroundStatus::Ongoing,
+        constraint = battleground.participants == 1,
+        constraint = battleground.status == BattlegroundStatus::Ongoing @ BattleRoyaleError::WrongBattlegroundStatus,
     )]
-    pub battleground_state: Box<Account<'info, BattlegroundState>>,
+    pub battleground: Box<Account<'info, BattlegroundState>>,
 
     #[account(
         mut,
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
-            battleground_state.key().as_ref(),
-            participant_state.nft_mint.as_ref(),
+            battleground.key().as_ref(),
+            participant.nft_mint.as_ref(),
         ],
         bump,
         has_one = nft_mint,
-        constraint = !participant_state.dead,
+        constraint = !participant.dead,
     )]
-    pub participant_state: Box<Account<'info, ParticipantState>>,
+    pub participant: Box<Account<'info, ParticipantState>>,
 
     #[account(owner = token::ID)]
     pub pot_mint: Account<'info, Mint>,

@@ -4,10 +4,9 @@ import { BATTLE_ROYALE_PROGRAM_ID, BATTLE_ROYALE_STATE_SEEDS } from "./constants
 import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
 import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
 import Battleground from "./battleground";
-import { CollectionInfo } from "./types";
+import { BattleRoyaleAccount, CollectionInfo } from "./types";
 
 export interface BattleRoyaleAddresses {
-  gameMaster: anchor.web3.PublicKey;
   battleRoyale: anchor.web3.PublicKey;
 }
 
@@ -15,32 +14,23 @@ class BattleRoyale {
   provider: anchor.AnchorProvider;
   program: Program<BattleRoyaleProgram>;
   addresses: BattleRoyaleAddresses;
+  state?: BattleRoyaleAccount;
 
-  constructor(gameMaster: anchor.web3.PublicKey, provider: anchor.AnchorProvider) {
+  constructor(provider: anchor.AnchorProvider) {
     this.connect(provider);
     this.addresses = {
-      gameMaster: gameMaster,
       battleRoyale: anchor.web3.PublicKey.findProgramAddressSync(
-        [BATTLE_ROYALE_STATE_SEEDS, gameMaster.toBuffer()],
+        [BATTLE_ROYALE_STATE_SEEDS],
         BATTLE_ROYALE_PROGRAM_ID
       )[0],
     };
   }
 
-  static fetch(provider: anchor.AnchorProvider) {
-    const battleRoyale = new BattleRoyale(provider.publicKey, provider);
-    return battleRoyale;
-  }
-
-  async initialize(fee: number) {
-    if (!this.provider.publicKey.equals(this.addresses.gameMaster)) {
-      throw new Error("Only the creator can initialize!");
-    }
-
+  async initialize(gameMaster: anchor.web3.PublicKey, fee: number) {
     const tx = await this.program.methods
-      .initialize(fee)
+      .initialize(gameMaster, fee)
       .accounts({
-        gameMaster: this.addresses.gameMaster,
+        signer: this.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
       })
       .rpc();
@@ -60,16 +50,9 @@ class BattleRoyale {
     return battleground;
   }
 
-  getBattleRoyaleStateAddress() {
-    const [stateAddress] = anchor.web3.PublicKey.findProgramAddressSync(
-      [BATTLE_ROYALE_STATE_SEEDS, this.addresses.gameMaster.toBuffer()],
-      BATTLE_ROYALE_PROGRAM_ID
-    );
-    return stateAddress;
-  }
-
   async getBattleRoyaleState() {
-    return await this.program.account.battleRoyaleState.fetch(this.getBattleRoyaleStateAddress());
+    this.state = await this.program.account.battleRoyaleState.fetch(this.addresses.battleRoyale);
+    return this.state;
   }
 
   connect(provider: anchor.AnchorProvider) {
@@ -80,6 +63,32 @@ class BattleRoyale {
       this.provider
     );
     return this;
+  }
+
+  async fetchBattlegroundsByCollection(info: CollectionInfo) {
+    if (info.v1) {
+      return await this.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 17,
+              bytes: anchor.web3.PublicKey.decode(Buffer.from(info.v1.whitelistRoot)).toString(),
+            },
+          },
+        ],
+      });
+    } else {
+      return await this.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
+        filters: [
+          {
+            memcmp: {
+              offset: 17,
+              bytes: info.v2.collectionMint.toString(),
+            },
+          },
+        ],
+      });
+    }
   }
 }
 

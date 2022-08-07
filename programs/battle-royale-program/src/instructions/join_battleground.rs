@@ -19,9 +19,9 @@ pub fn join_battleground(
         BattleRoyaleError::InvalidStatistics
     );
 
-    *ctx.accounts.participant_state = ParticipantState {
-        bump: *ctx.bumps.get("participant_state").unwrap(),
-        battleground: ctx.accounts.battleground_state.key(),
+    *ctx.accounts.participant = ParticipantState {
+        bump: *ctx.bumps.get("participant").unwrap(),
+        battleground: ctx.accounts.battleground.key(),
         nft_mint: ctx.accounts.nft_mint.key(),
         attack: attack + 100,
         defense: defense + 50,
@@ -29,13 +29,13 @@ pub fn join_battleground(
         health_points: 750 + (defense + 50) * 5,
         dead: false,
     };
-    ctx.accounts.battleground_state.participants += 1;
+    ctx.accounts.battleground.participants += 1;
 
-    let entry_fee = ctx.accounts.battleground_state.entry_fee;
-    let dev_fee = entry_fee * (ctx.accounts.battle_royale_state.fee as u64) / 10000;
+    let entry_fee = ctx.accounts.battleground.entry_fee;
+    let dev_fee = entry_fee * (ctx.accounts.battle_royale.fee as u64) / 10000;
 
     msg!(
-        "Paying {} to the pot, {} to the dev",
+        "Paying {} to the pot, {} to the treasury",
         entry_fee - dev_fee,
         dev_fee
     );
@@ -61,7 +61,7 @@ pub fn join_battleground(
     token::transfer(transfer_dev_fee_ctx, dev_fee)?;
 
     emit!(JoinBattlegroundEvent {
-        battleground: ctx.accounts.battleground_state.key(),
+        battleground: ctx.accounts.battleground.key(),
         nft_mint: ctx.accounts.nft_mint.key(),
         attack,
         defense,
@@ -80,22 +80,21 @@ pub struct JoinBattleground<'info> {
     #[account(mut)]
     pub game_master: AccountInfo<'info>,
 
+    /// The Battle Royale state
     #[account(
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            battle_royale_state.game_master.as_ref(),
         ],
-        bump = battle_royale_state.bump,
+        bump,
         has_one = game_master,
     )]
-    pub battle_royale_state: Account<'info, BattleRoyaleState>,
+    pub battle_royale: Box<Account<'info, BattleRoyaleState>>,
 
     /// CHECK: Checking correspondance with battle royale state
     #[account(
         seeds = [
             BATTLEGROUND_AUTHORITY_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground.id.to_le_bytes().as_ref(),
         ],
         bump,
     )]
@@ -106,15 +105,14 @@ pub struct JoinBattleground<'info> {
         mut,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground.id.to_le_bytes().as_ref(),
         ],
         bump,
         has_one = pot_mint,
-        constraint = battleground_state.participants < battleground_state.participants_cap,
-        constraint = battleground_state.status == BattlegroundStatus::Preparing @ BattleRoyaleError::WrongBattlegroundStatus,
+        constraint = battleground.participants < battleground.participants_cap,
+        constraint = battleground.status == BattlegroundStatus::Preparing @ BattleRoyaleError::WrongBattlegroundStatus,
     )]
-    pub battleground_state: Account<'info, BattlegroundState>,
+    pub battleground: Box<Account<'info, BattlegroundState>>,
 
     /// The participant state
     #[account(
@@ -123,13 +121,13 @@ pub struct JoinBattleground<'info> {
         space = ParticipantState::LEN,
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
-            battleground_state.key().as_ref(),
+            battleground.key().as_ref(),
             nft_mint.key().as_ref(),
         ],
         bump,
-        constraint = !participant_state.dead
+        constraint = !participant.dead
     )]
-    pub participant_state: Account<'info, ParticipantState>,
+    pub participant: Account<'info, ParticipantState>,
 
     /// The pot token mint
     #[account(owner = token::ID)]
@@ -144,7 +142,7 @@ pub struct JoinBattleground<'info> {
     #[account(
         address = mpl_token_metadata::pda::find_metadata_account(&nft_mint.key()).0,
         constraint = mpl_token_metadata::check_id(nft_metadata.owner),
-        constraint = verify_collection(&nft_metadata, &battleground_state.collection_info, whitelist_proof) @ BattleRoyaleError::CollectionVerificationFailed
+        constraint = verify_collection(&nft_metadata, &battleground.collection_info, whitelist_proof) @ BattleRoyaleError::CollectionVerificationFailed
     )]
     pub nft_metadata: UncheckedAccount<'info>,
 

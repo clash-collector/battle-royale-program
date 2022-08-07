@@ -1,13 +1,12 @@
 import * as anchor from "@project-serum/anchor";
 import { expect } from "chai";
 import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo } from "battle-royale-ts";
-import { mintNft, mintToken, verifyCollection } from "./utils";
-import { airdropWallets } from "./common";
+import { mintCollection, mintNft, mintToken, verifyCollection } from "./utils";
+import { airdropWallets, gameMaster } from "./common";
 
 describe("Start a Battleground", () => {
   const nftSymbol = "DAPE";
 
-  const gameMaster = new anchor.Wallet(anchor.web3.Keypair.generate());
   const creator = new anchor.Wallet(anchor.web3.Keypair.generate());
   const player = new anchor.Wallet(anchor.web3.Keypair.generate());
   let provider: anchor.AnchorProvider;
@@ -32,25 +31,10 @@ describe("Start a Battleground", () => {
     potMint = (await mintToken(provider, creator.payer, player.publicKey, initialAmount)).mint;
 
     // Create the collection
-    const { mint: collection } = await mintNft(
-      provider,
-      nftSymbol,
-      gameMaster.payer,
-      player.publicKey
-    );
-    collectionMint = collection;
-
-    const { mint } = await mintNft(
-      provider,
-      nftSymbol,
-      gameMaster.payer,
+    const { mints, collectionMint } = await mintCollection(provider, nftSymbol, gameMaster.payer, [
       player.publicKey,
-      collectionMint
-    );
-    nftMint = mint;
-
-    // Collection authority verifies that the NFT belongs to the collection
-    await verifyCollection(provider, mint, collectionMint, gameMaster.payer);
+    ]);
+    nftMint = mints[0];
 
     collectionInfo = {
       v2: {
@@ -58,11 +42,11 @@ describe("Start a Battleground", () => {
       },
     };
 
-    battleRoyale = new BattleRoyale(gameMaster.publicKey, provider);
+    battleRoyale = new BattleRoyale(provider);
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(fee);
+    await battleRoyale.initialize(gameMaster.publicKey, fee);
 
     // Create the battleground
     battleground = await battleRoyale.createBattleground(

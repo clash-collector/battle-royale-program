@@ -2,8 +2,8 @@ import * as anchor from "@project-serum/anchor";
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { expect } from "chai";
 import { Battleground, BattleRoyale, CollectionInfo } from "battle-royale-ts";
-import { airdropWallets, defaultProvider, smbMints } from "./common";
-import { mintNft, mintToken, verifyCollection } from "./utils";
+import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
+import { expectRevert, mintCollection, mintNft, mintToken, verifyCollection } from "./utils";
 
 describe("Join a Battleground", () => {
   const nftSymbol = "DAPE";
@@ -12,18 +12,18 @@ describe("Join a Battleground", () => {
     () => new anchor.web3.Keypair().publicKey
   );
 
-  const gameMaster = new anchor.Wallet(anchor.web3.Keypair.generate());
   const creator = new anchor.Wallet(anchor.web3.Keypair.generate());
   const player = new anchor.Wallet(anchor.web3.Keypair.generate());
+  const player2 = new anchor.Wallet(anchor.web3.Keypair.generate());
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
-  let nftMint: anchor.web3.PublicKey;
+  let nftMints: anchor.web3.PublicKey[];
   let nftMetadata: anchor.web3.PublicKey;
   let collectionMint: anchor.web3.PublicKey;
   let battleRoyale: BattleRoyale;
   let battleground: Battleground;
   let fee: number;
-  let participantsCap = 100;
+  let participantsCap = 1;
   let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
   let actionPointsPerDay = 10;
@@ -32,29 +32,16 @@ describe("Join a Battleground", () => {
   before(async () => {
     provider = new anchor.AnchorProvider(defaultProvider.connection, gameMaster, {});
 
-    await airdropWallets([gameMaster, creator, player], provider);
+    await airdropWallets([gameMaster, creator, player, player2], provider);
 
     /// Create the pot token and mint some to the player
     potMint = (await mintToken(provider, creator.payer, player.publicKey, initialAmount)).mint;
     // Create the collection
-    const { mint: collection } = await mintNft(
-      provider,
-      nftSymbol,
-      gameMaster.payer,
-      player.publicKey
-    );
-    collectionMint = collection;
-    const { mint } = await mintNft(
-      provider,
-      nftSymbol,
-      gameMaster.payer,
+    const { mints, collectionMint } = await mintCollection(provider, nftSymbol, gameMaster.payer, [
       player.publicKey,
-      collectionMint
-    );
-    nftMint = mint;
-
-    // Collection authority verifies that the NFT belongs to the collection
-    await verifyCollection(provider, mint, collectionMint, gameMaster.payer);
+      player2.publicKey,
+    ]);
+    nftMints = mints;
 
     collectionInfo = {
       v2: {
@@ -62,10 +49,11 @@ describe("Join a Battleground", () => {
       },
     };
 
-    battleRoyale = new BattleRoyale(gameMaster.publicKey, provider);
+    battleRoyale = new BattleRoyale(provider);
 
+    // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(fee);
+    await battleRoyale.initialize(gameMaster.publicKey, fee);
     battleground = await battleRoyale.createBattleground(
       collectionInfo,
       potMint,
@@ -79,13 +67,11 @@ describe("Join a Battleground", () => {
     let attack = 50;
     let defense = 50;
     const participant = await battleground
-      .connect(new anchor.AnchorProvider(provider.connection, player, { commitment: "processed" }))
-      .join(nftMint, attack, defense);
+      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+      .join(nftMints[0], attack, defense);
     const state = await participant.getParticipantState();
 
-    expect(state.battleground.toString()).to.equal(
-      participant.battleground.addresses.battleground.toString()
-    );
+    expect(state.battleground.toString()).to.equal(participant.addresses.battleground.toString());
     expect(state.nftMint.toString()).to.equal(participant.nft.toString());
     expect(state.attack).to.equal(100 + attack);
     expect(state.defense).to.equal(50 + defense);
@@ -100,5 +86,15 @@ describe("Join a Battleground", () => {
     ).to.equal((initialAmount - (initialAmount * fee) / 10000).toString());
 
     expect((await battleground.getBattlegroundState()).participants).to.equal(1);
+  });
+
+  it("fails when it's full", async () => {
+    let attack = 50;
+    let defense = 50;
+    expectRevert(
+      battleground
+        .connect(new anchor.AnchorProvider(provider.connection, player2, {}))
+        .join(nftMints[1], attack, defense)
+    );
   });
 });

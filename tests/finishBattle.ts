@@ -14,12 +14,11 @@ import {
   Participant,
 } from "battle-royale-ts";
 import { mintNft, mintToken, verifyCollection } from "./utils";
-import { airdropWallets } from "./common";
+import { airdropWallets, gameMaster } from "./common";
 
 describe("Finish Battle", () => {
   const nftSymbol = "DAPE";
 
-  const gameMaster = new anchor.Wallet(anchor.web3.Keypair.generate());
   const creator = new anchor.Wallet(anchor.web3.Keypair.generate());
   const player = new anchor.Wallet(anchor.web3.Keypair.generate());
   const player2 = new anchor.Wallet(anchor.web3.Keypair.generate());
@@ -93,11 +92,11 @@ describe("Finish Battle", () => {
       },
     };
 
-    battleRoyale = new BattleRoyale(gameMaster.publicKey, provider);
+    battleRoyale = new BattleRoyale(provider);
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(fee);
+    await battleRoyale.initialize(gameMaster.publicKey, fee);
 
     // Create the battleground
     battleground = await battleRoyale.createBattleground(

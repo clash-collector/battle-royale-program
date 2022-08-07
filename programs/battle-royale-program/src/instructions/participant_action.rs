@@ -65,7 +65,6 @@ pub struct ParticipantAction<'info> {
     #[account(
         seeds = [
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
-            battle_royale_state.game_master.as_ref(),
         ],
         bump,
     )]
@@ -76,11 +75,10 @@ pub struct ParticipantAction<'info> {
         mut,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.key().as_ref(),
-            battleground_state.id.to_be_bytes().as_ref(),
+            battleground_state.id.to_le_bytes().as_ref(),
         ],
         bump,
-        constraint = battleground_state.status == BattlegroundStatus::Ongoing,
+        constraint = battleground_state.status == BattlegroundStatus::Ongoing @ BattleRoyaleError::WrongBattlegroundStatus,
     )]
     pub battleground_state: Account<'info, BattlegroundState>,
 

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "license": "MIT",
+  "scripts": {
+    "build": "cd .. && anchor build && cd battle-royale-ts && cp ../target/idl/battle_royale_program.json ./src/idl.json && cp ../target/types/battle_royale_program.ts ./src/programTypes.ts"
+  },
   "dependencies": {
     "@metaplex-foundation/mpl-token-metadata": "^2.2.2",
     "@project-serum/anchor": "^0.25.0",

@@ -5,30 +5,28 @@ import {
   BATTLEGROUND_AUTHORITY_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
 } from "./constants";
-import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
-import BattleRoyale, { BattleRoyaleAddresses } from "./battleRoyale";
+import { BattleRoyaleProgram } from "./programTypes";
+import BattleRoyaleIdl from "./idl.json";
+import BattleRoyale from "./battleRoyale";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";
 
-export interface BattlegroundAddresses extends BattleRoyaleAddresses {
-  authority: anchor.web3.PublicKey;
-  battleground: anchor.web3.PublicKey;
-  potMint: anchor.web3.PublicKey;
-}
-
 class Battleground {
-  provider: anchor.AnchorProvider;
   program: Program<BattleRoyaleProgram>;
   battleRoyale: BattleRoyale;
   id: number;
-  addresses: BattlegroundAddresses;
+  addresses: {
+    battleRoyale: anchor.web3.PublicKey;
+    authority: anchor.web3.PublicKey;
+    battleground: anchor.web3.PublicKey;
+    potMint: anchor.web3.PublicKey;
+  };
 
   constructor(
     battleRoyale: BattleRoyale,
     id: number,
     potMint: anchor.web3.PublicKey,
-    provider: anchor.AnchorProvider
+    provider: anchor.Provider
   ) {
     this.connect(provider);
     this.battleRoyale = battleRoyale;
@@ -56,12 +54,12 @@ class Battleground {
     const tx = await this.program.methods
       .createBattleground(collectionInfo as any, participantsCap, entryFee, actionPointsPerDay)
       .accounts({
-        signer: this.provider.publicKey,
+        signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
         potMint: this.addresses.potMint,
       })
       .rpc();
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async join(
@@ -70,7 +68,7 @@ class Battleground {
     defense: number,
     whitelistProof: number[][] | null = null
   ) {
-    const participant = new Participant(this, nft, this.provider);
+    const participant = new Participant(this, nft, this.program.provider);
     await participant.join(attack, defense, whitelistProof);
     return participant;
   }
@@ -84,20 +82,18 @@ class Battleground {
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       })
       .rpc();
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async getBattlegroundState() {
     return await this.program.account.battlegroundState.fetch(this.addresses.battleground);
   }
 
-  connect(provider: anchor.AnchorProvider) {
-    this.provider = new anchor.AnchorProvider(provider.connection, provider.wallet, {});
-    this.provider.connection.getLatestBlockhash();
+  connect(provider: anchor.Provider) {
     this.program = new Program<BattleRoyaleProgram>(
       BattleRoyaleIdl as any,
       BATTLE_ROYALE_PROGRAM_ID,
-      this.provider
+      provider
     );
     return this;
   }

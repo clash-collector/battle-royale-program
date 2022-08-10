@@ -10,7 +10,7 @@ use crate::instructions::*;
 use crate::state::*;
 use anchor_lang::prelude::*;
 
-declare_id!("9zd3zSw8AGVGbsqQ2aT1vi92MCtW7Kbe8pTiuFCJUa1Z");
+declare_id!("EnLAsghi9Yp25djXr7o7RsGHQxXz8kcCpL6LnjGRmxEQ");
 
 #[program]
 pub mod battle_royale_program {

@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 
 export const BATTLE_ROYALE_PROGRAM_ID = new anchor.web3.PublicKey(
-  "9zd3zSw8AGVGbsqQ2aT1vi92MCtW7Kbe8pTiuFCJUa1Z"
+  "EnLAsghi9Yp25djXr7o7RsGHQxXz8kcCpL6LnjGRmxEQ"
 );
 
 // Seeds

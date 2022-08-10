@@ -1,19 +1,16 @@
 import * as anchor from "@project-serum/anchor";
-import { Program, SystemProgram } from "@project-serum/anchor";
+import { Program } from "@project-serum/anchor";
 import { BATTLE_ROYALE_PROGRAM_ID, BATTLE_ROYALE_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "./programTypes";
+import BattleRoyaleIdl from "./idl.json";
 import Battleground from "./battleground";
 import { BattleRoyaleAccount, CollectionInfo } from "./types";
 
-export interface BattleRoyaleAddresses {
-  battleRoyale: anchor.web3.PublicKey;
-}
-
 class BattleRoyale {
-  provider: anchor.AnchorProvider;
   program: Program<BattleRoyaleProgram>;
-  addresses: BattleRoyaleAddresses;
+  addresses: {
+    battleRoyale: anchor.web3.PublicKey;
+  };
   state?: BattleRoyaleAccount;
 
   constructor(provider: anchor.AnchorProvider) {
@@ -30,11 +27,11 @@ class BattleRoyale {
     const tx = await this.program.methods
       .initialize(gameMaster, fee)
       .accounts({
-        signer: this.provider.publicKey,
+        signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
       })
       .rpc();
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async createBattleground(
@@ -45,7 +42,7 @@ class BattleRoyale {
     actionPointsPerDay: number
   ) {
     const id = (await this.getBattleRoyaleState()).lastBattlegroundId.toNumber();
-    const battleground = new Battleground(this, id, potMint, this.provider);
+    const battleground = new Battleground(this, id, potMint, this.program.provider);
     await battleground.create(collectionInfo, participantsCap, entryFee, actionPointsPerDay);
     return battleground;
   }
@@ -56,18 +53,18 @@ class BattleRoyale {
   }
 
   connect(provider: anchor.AnchorProvider) {
-    this.provider = new anchor.AnchorProvider(provider.connection, provider.wallet, {});
     this.program = new Program<BattleRoyaleProgram>(
       BattleRoyaleIdl as any,
       BATTLE_ROYALE_PROGRAM_ID,
-      this.provider
+      provider
     );
     return this;
   }
 
   async fetchBattlegroundsByCollection(info: CollectionInfo) {
+    console.log(info);
     if (info.v1) {
-      return await this.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
+      return await this.program.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
         filters: [
           {
             memcmp: {
@@ -78,7 +75,7 @@ class BattleRoyale {
         ],
       });
     } else {
-      return await this.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
+      return await this.program.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
         filters: [
           {
             memcmp: {

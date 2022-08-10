@@ -1,15 +1,9 @@
 import * as anchor from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
-import {
-  Battleground,
-  BattleRoyale,
-  BattlegroundStatus,
-  getMerkleTree,
-  CollectionInfo,
-} from "battle-royale-ts";
+import { Battleground, BattleRoyale, BattlegroundStatus, CollectionInfo } from "battle-royale-ts";
 import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
-import { mintCollection } from "./utils";
+import { getMerkleTree, mintCollection } from "./utils";
 
 describe("Create a Battleground", () => {
   const nftSymbol = "DAPE";

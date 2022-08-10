@@ -3,7 +3,7 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-battle_royale_program = "9zd3zSw8AGVGbsqQ2aT1vi92MCtW7Kbe8pTiuFCJUa1Z"
+battle_royale_program = "EnLAsghi9Yp25djXr7o7RsGHQxXz8kcCpL6LnjGRmxEQ"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
@@ -19,3 +19,4 @@ wallet = "./tests/keypairs/test.json"
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 test-finish = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/finishBattle.ts"
+create-collection = "yarn run ts-node scripts/createTestCollection.ts"

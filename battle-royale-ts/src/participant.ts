@@ -1,39 +1,32 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import {
-  BATTLEGROUND_AUTHORITY_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
   PARTICIPANT_STATE_SEEDS,
 } from "./constants";
-import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "./programTypes";
+import BattleRoyaleIdl from "./idl.json";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  getAccount,
   getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import Battleground, { BattlegroundAddresses } from "./battleground";
+import Battleground from "./battleground";
 import { getTokenMetadata } from "./utils";
 import { ActionType } from "./types";
 
-export interface ParticipantAddresses extends BattlegroundAddresses {
-  participant: anchor.web3.PublicKey;
-}
-
 class Participant {
-  provider: anchor.AnchorProvider;
   program: Program<BattleRoyaleProgram>;
   battleground: Battleground;
   nft: anchor.web3.PublicKey;
   nftMetadata: anchor.web3.PublicKey;
-  addresses: ParticipantAddresses;
+  addresses: {
+    battleRoyale: anchor.web3.PublicKey;
+    authority: anchor.web3.PublicKey;
+    battleground: anchor.web3.PublicKey;
+    potMint: anchor.web3.PublicKey;
+    participant: anchor.web3.PublicKey;
+  };
 
-  constructor(
-    battleground: Battleground,
-    nft: anchor.web3.PublicKey,
-    provider: anchor.AnchorProvider
-  ) {
+  constructor(battleground: Battleground, nft: anchor.web3.PublicKey, provider: anchor.Provider) {
     this.connect(provider);
     this.battleground = battleground;
     this.nft = nft;
@@ -58,19 +51,19 @@ class Participant {
     const devAccount = await getAssociatedTokenAddress(this.addresses.potMint, gameMaster, true);
     const playerAccount = await getAssociatedTokenAddress(
       this.addresses.potMint,
-      this.provider.publicKey,
+      this.program.provider.publicKey,
       true
     );
     const playerNftTokenAccount = await getAssociatedTokenAddress(
       this.nft,
-      this.provider.publicKey,
+      this.program.provider.publicKey,
       true
     );
 
     const tx = await this.program.methods
       .joinBattleground(attack, defense, whitelistProof)
       .accounts({
-        signer: this.provider.publicKey,
+        signer: this.program.provider.publicKey,
         gameMaster,
         battleRoyale: this.addresses.battleRoyale,
         authority: this.addresses.authority,
@@ -85,20 +78,20 @@ class Participant {
         playerNftTokenAccount,
       })
       .rpc();
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async action(target: Participant, actionType: ActionType, actionPoints: number) {
     const playerNftTokenAccount = await getAssociatedTokenAddress(
       this.nft,
-      this.provider.publicKey,
+      this.program.provider.publicKey,
       true
     );
 
     const tx = await this.program.methods
       .participantAction(actionType, actionPoints)
       .accounts({
-        signer: this.provider.publicKey,
+        signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
         battlegroundState: this.addresses.battleground,
         participantState: this.addresses.participant,
@@ -107,7 +100,7 @@ class Participant {
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       })
       .rpc();
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async finishBattle() {
@@ -118,12 +111,12 @@ class Participant {
     );
     const winnerAccount = await getAssociatedTokenAddress(
       this.addresses.potMint,
-      this.provider.publicKey,
+      this.program.provider.publicKey,
       true
     );
     const winnerNftTokenAccount = await getAssociatedTokenAddress(
       this.nft,
-      this.provider.publicKey,
+      this.program.provider.publicKey,
       true
     );
 
@@ -134,7 +127,7 @@ class Participant {
         battleground: this.addresses.battleground,
         authority: this.addresses.authority,
         participant: this.addresses.participant,
-        winner: this.provider.publicKey,
+        winner: this.program.provider.publicKey,
         nftMint: this.nft,
         potMint: this.addresses.potMint,
         potAccount,
@@ -142,20 +135,18 @@ class Participant {
         winnerNftTokenAccount,
       })
       .rpc({ skipPreflight: true });
-    await this.provider.connection.confirmTransaction(tx);
+    await this.program.provider.connection.confirmTransaction(tx);
   }
 
   async getParticipantState() {
     return await this.program.account.participantState.fetch(this.addresses.participant);
   }
 
-  connect(provider: anchor.AnchorProvider) {
-    this.provider = new anchor.AnchorProvider(provider.connection, provider.wallet, {});
-    this.provider.connection.getLatestBlockhash();
+  connect(provider: anchor.Provider) {
     this.program = new Program<BattleRoyaleProgram>(
       BattleRoyaleIdl as any,
       BATTLE_ROYALE_PROGRAM_ID,
-      this.provider
+      provider
     );
     return this;
   }

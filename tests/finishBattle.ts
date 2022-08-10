@@ -6,13 +6,7 @@ import {
   transferChecked,
 } from "@solana/spl-token";
 import { expect } from "chai";
-import {
-  Battleground,
-  BattlegroundStatus,
-  BattleRoyale,
-  CollectionInfo,
-  Participant,
-} from "battle-royale-ts";
+import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo, Participant } from "../ts";
 import { mintNft, mintToken, verifyCollection } from "./utils";
 import { airdropWallets, gameMaster } from "./common";
 

@@ -30,7 +30,7 @@ pub fn participant_action(
         ActionType::Attack => {
             let damage = participant.attack * action_points;
             if damage >= target.health_points {
-                target.dead = true;
+                target.alive = false;
                 target.health_points = 0;
                 ctx.accounts.battleground_state.participants -= 1;
             } else {
@@ -90,7 +90,7 @@ pub struct ParticipantAction<'info> {
             participant_state.nft_mint.as_ref(),
         ],
         bump,
-        constraint = !participant_state.dead,
+        constraint = participant_state.alive,
     )]
     pub participant_state: Account<'info, ParticipantState>,
 
@@ -102,7 +102,7 @@ pub struct ParticipantAction<'info> {
             target_participant_state.nft_mint.as_ref(),
         ],
         bump,
-        constraint = !participant_state.dead,
+        constraint = participant_state.alive,
     )]
     pub target_participant_state: Account<'info, ParticipantState>,
 

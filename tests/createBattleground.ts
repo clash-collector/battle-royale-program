@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
-import { Battleground, BattleRoyale, BattlegroundStatus, CollectionInfo } from "battle-royale-ts";
+import { Battleground, BattleRoyale, BattlegroundStatus, CollectionInfo } from "../ts";
 import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
 import { getMerkleTree, mintCollection } from "./utils";
 

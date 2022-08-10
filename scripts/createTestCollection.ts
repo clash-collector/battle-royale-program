@@ -1,6 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { BN } from "bn.js";
-import { BattleRoyale } from "../battle-royale-ts/src";
+import { BattleRoyale } from "../ts";
 import { gameMaster } from "../tests/common";
 import { mintCollection, mintToken } from "../tests/utils";
 

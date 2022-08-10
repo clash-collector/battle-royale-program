@@ -92,7 +92,7 @@ pub struct FinishBattle<'info> {
         ],
         bump,
         has_one = nft_mint,
-        constraint = !participant.dead,
+        constraint = participant.alive,
     )]
     pub participant: Box<Account<'info, ParticipantState>>,
 

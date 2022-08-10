@@ -1,5 +1,5 @@
 import * as anchor from "@project-serum/anchor";
-import { BattleRoyaleProgram } from "../../target/types/battle_royale_program";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
 
 // export declare type CollectionInfo = anchor.IdlTypes<BattleRoyaleProgram>["CollectionInfo"];
 export interface CollectionInfo {

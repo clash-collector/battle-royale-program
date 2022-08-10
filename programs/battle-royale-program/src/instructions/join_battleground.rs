@@ -27,7 +27,7 @@ pub fn join_battleground(
         defense: defense + 50,
         action_points_spent: 0,
         health_points: 750 + (defense + 50) * 5,
-        dead: false,
+        alive: true,
     };
     ctx.accounts.battleground.participants += 1;
 
@@ -115,6 +115,8 @@ pub struct JoinBattleground<'info> {
     pub battleground: Box<Account<'info, BattlegroundState>>,
 
     /// The participant state
+    /// The participant account must not be alive or must be the winner of the last battle
+    /// This prevents reentering with the same NFT
     #[account(
         init_if_needed,
         payer = signer,
@@ -125,7 +127,7 @@ pub struct JoinBattleground<'info> {
             nft_mint.key().as_ref(),
         ],
         bump,
-        constraint = !participant.dead
+        constraint = !participant.alive || Some(participant.key()) == battleground.last_winner
     )]
     pub participant: Account<'info, ParticipantState>,
 

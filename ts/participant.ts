@@ -1,14 +1,9 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import {
-  BATTLE_ROYALE_PROGRAM_ID,
-  PARTICIPANT_STATE_SEEDS,
-} from "./constants";
-import { BattleRoyaleProgram } from "./programTypes";
-import BattleRoyaleIdl from "./idl.json";
-import {
-  getAssociatedTokenAddress,
-} from "@solana/spl-token";
+import { BATTLE_ROYALE_PROGRAM_ID, PARTICIPANT_STATE_SEEDS } from "./constants";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 import Battleground from "./battleground";
 import { getTokenMetadata } from "./utils";
 import { ActionType } from "./types";

@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
 import { expect } from "chai";
-import { Battleground, BattleRoyale, CollectionInfo } from "battle-royale-ts";
+import { Battleground, BattleRoyale, CollectionInfo } from "../ts";
 import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
 import { expectRevert, mintCollection, mintNft, mintToken, verifyCollection } from "./utils";
 
@@ -18,12 +18,10 @@ describe("Join a Battleground", () => {
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
   let nftMints: anchor.web3.PublicKey[];
-  let nftMetadata: anchor.web3.PublicKey;
-  let collectionMint: anchor.web3.PublicKey;
   let battleRoyale: BattleRoyale;
   let battleground: Battleground;
   let fee: number;
-  let participantsCap = 1;
+  let participantsCap = 2;
   let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
   let actionPointsPerDay = 10;
@@ -37,10 +35,13 @@ describe("Join a Battleground", () => {
     /// Create the pot token and mint some to the player
     potMint = (await mintToken(provider, creator.payer, player.publicKey, initialAmount)).mint;
     // Create the collection
-    const { mints, collectionMint } = await mintCollection(provider, nftSymbol, gameMaster.payer, [
-      player.publicKey,
-      player2.publicKey,
-    ]);
+    const { mints, collectionMint } = await mintCollection(
+      provider,
+      nftSymbol,
+      gameMaster.payer,
+      [player.publicKey, player2.publicKey],
+      4
+    );
     nftMints = mints;
 
     collectionInfo = {
@@ -75,7 +76,7 @@ describe("Join a Battleground", () => {
     expect(state.nftMint.toString()).to.equal(participant.nft.toString());
     expect(state.attack).to.equal(100 + attack);
     expect(state.defense).to.equal(50 + defense);
-    expect(state.dead).to.equal(false);
+    expect(state.alive).to.equal(true);
     expect(
       (
         await getAccount(
@@ -88,13 +89,29 @@ describe("Join a Battleground", () => {
     expect((await battleground.getBattlegroundState()).participants).to.equal(1);
   });
 
+  it("fails when reentering with the same token", async () => {
+    let attack = 50;
+    let defense = 50;
+    await expectRevert(
+      battleground
+        .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+        .join(nftMints[0], attack, defense),
+      "ConstraintRaw"
+    );
+  });
+
   it("fails when it's full", async () => {
     let attack = 50;
     let defense = 50;
-    expectRevert(
+    console.log();
+    await battleground
+      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+      .join(nftMints[2], attack, defense);
+    await expectRevert(
       battleground
         .connect(new anchor.AnchorProvider(provider.connection, player2, {}))
-        .join(nftMints[1], attack, defense)
+        .join(nftMints[1], attack, defense),
+      "ConstraintRaw"
     );
   });
 });

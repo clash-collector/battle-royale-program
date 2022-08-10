@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { expect } from "chai";
-import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo } from "battle-royale-ts";
-import { mintCollection, mintNft, mintToken, verifyCollection } from "./utils";
+import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo } from "../ts";
+import { mintCollection, mintToken } from "./utils";
 import { airdropWallets, gameMaster } from "./common";
 
 describe("Start a Battleground", () => {
@@ -12,7 +12,6 @@ describe("Start a Battleground", () => {
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
   let nftMint: anchor.web3.PublicKey;
-  let collectionMint: anchor.web3.PublicKey;
   let battleRoyale: BattleRoyale;
   let battleground: Battleground;
   let fee: number;

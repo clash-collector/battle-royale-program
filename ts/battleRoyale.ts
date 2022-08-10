@@ -1,8 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { BATTLE_ROYALE_PROGRAM_ID, BATTLE_ROYALE_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "./programTypes";
-import BattleRoyaleIdl from "./idl.json";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
 import Battleground from "./battleground";
 import { BattleRoyaleAccount, CollectionInfo } from "./types";
 

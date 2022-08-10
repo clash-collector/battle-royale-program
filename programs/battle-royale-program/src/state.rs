@@ -56,7 +56,7 @@ pub struct ParticipantState {
     pub defense: u32,
     pub health_points: u32,
     pub action_points_spent: u32,
-    pub dead: bool,
+    pub alive: bool,
 }
 
 impl ParticipantState {

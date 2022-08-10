@@ -1,25 +1,11 @@
 import * as anchor from "@project-serum/anchor";
 import {
-  createMint,
-  getAccount,
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
-  mintTo,
-  mintToChecked,
-  TokenInstruction,
-  transfer,
   transferChecked,
 } from "@solana/spl-token";
 import { expect } from "chai";
-import MerkleTree from "merkletreejs";
-import {
-  ActionType,
-  Battleground,
-  BattlegroundStatus,
-  BattleRoyale,
-  CollectionInfo,
-  Participant,
-} from "battle-royale-ts";
+import { Battleground, BattleRoyale, CollectionInfo, Participant } from "../ts";
 import { mintNft, mintToken, verifyCollection } from "./utils";
 import { airdropWallets, gameMaster } from "./common";
 

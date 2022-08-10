@@ -5,8 +5,8 @@ import {
   BATTLEGROUND_AUTHORITY_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
 } from "./constants";
-import { BattleRoyaleProgram } from "./programTypes";
-import BattleRoyaleIdl from "./idl.json";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
 import BattleRoyale from "./battleRoyale";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";

@@ -1,9 +1,10 @@
 import * as anchor from "@project-serum/anchor";
 import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
-import { BattleRoyale } from "battle-royale-ts";
+import { BattleRoyale } from "../ts";
 import { airdropWallets, defaultProvider, gameMaster } from "./common";
 import { expectRevert } from "./utils";
+import { Keypair } from "@solana/web3.js";
 
 describe("Initializing a Battle Royale", () => {
   // Configure the client to use the local cluster.
@@ -11,12 +12,13 @@ describe("Initializing a Battle Royale", () => {
 
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
+  let stranger: anchor.Wallet = new anchor.Wallet(Keypair.generate());
   let battleRoyale: BattleRoyale;
 
   before(async () => {
     provider = new anchor.AnchorProvider(defaultProvider.connection, gameMaster, {});
 
-    await airdropWallets([gameMaster], provider);
+    await airdropWallets([gameMaster, stranger], provider);
 
     potMint = await createMint(
       provider.connection,
@@ -56,11 +58,10 @@ describe("Initializing a Battle Royale", () => {
     });
 
     it("Failes when called by a stranger", async () => {
-      const stranger = new anchor.Wallet(anchor.web3.Keypair.generate());
       let state = await battleRoyale.getBattleRoyaleState();
       const feeBefore = state.fee;
 
-      expectRevert(
+      await expectRevert(
         battleRoyale
           .connect(new anchor.AnchorProvider(provider.connection, stranger, {}))
           .initialize(gameMaster.publicKey, feeBefore * 2)

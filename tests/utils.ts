@@ -234,9 +234,13 @@ export async function mintCollection(
   return { mints, collectionMint };
 }
 
-export async function expectRevert(promise: Promise<any>) {
+export async function expectRevert(promise: Promise<any>, msg?: string) {
   try {
     await promise;
     assert(false);
-  } catch (e) {}
+  } catch (e) {
+    if (e.errorLogs[0]) {
+      assert((e.errorLogs[0] as string).includes(msg));
+    }
+  }
 }

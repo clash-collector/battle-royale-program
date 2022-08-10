@@ -57,14 +57,15 @@ describe("Initializing a Battle Royale", () => {
       expect(state.fee).to.equal(feeBefore * 2);
     });
 
-    it("Failes when called by a stranger", async () => {
+    it("fails when called by a stranger", async () => {
       let state = await battleRoyale.getBattleRoyaleState();
       const feeBefore = state.fee;
 
       await expectRevert(
         battleRoyale
           .connect(new anchor.AnchorProvider(provider.connection, stranger, {}))
-          .initialize(gameMaster.publicKey, feeBefore * 2)
+          .initialize(gameMaster.publicKey, feeBefore * 2),
+        "ConstraintRaw"
       );
     });
   });

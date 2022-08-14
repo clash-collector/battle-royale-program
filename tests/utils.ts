@@ -15,7 +15,7 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import keccak256 from "keccak256";
 import MerkleTree from "merkletreejs";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import { gameMaster } from "./common";
 
 export const getMerkleTree = (mints: anchor.web3.PublicKey[]) => {
@@ -239,8 +239,8 @@ export async function expectRevert(promise: Promise<any>, msg?: string) {
     await promise;
     assert(false);
   } catch (e) {
-    if (e.errorLogs[0]) {
-      assert((e.errorLogs[0] as string).includes(msg));
+    if (e.errorLogs[0] && msg) {
+      expect(e.errorLogs[0]).to.include(msg);
     }
   }
 }

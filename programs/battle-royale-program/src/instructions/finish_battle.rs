@@ -12,6 +12,10 @@ pub fn finish_battle(ctx: Context<FinishBattle>) -> Result<()> {
     ctx.accounts.battleground.status = BattlegroundStatus::Preparing;
     ctx.accounts.battleground.last_winner = Some(ctx.accounts.winner_nft_token_account.mint);
 
+    // Reset the participant
+    ctx.accounts.participant.action_points_spent = 0;
+    ctx.accounts.participant.health_points = 750 + (ctx.accounts.participant.defense + 50) * 5;
+
     // Get authority signer seeds
     let authority_bump = *ctx.bumps.get("authority").unwrap();
     let authority_seeds = &[

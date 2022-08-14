@@ -23,7 +23,13 @@ export default async function main() {
 
   const battleRoyale = new BattleRoyale(provider);
   await battleRoyale.initialize(gameMaster.publicKey, 1000);
-  await battleRoyale.createBattleground({ v2: { collectionMint } }, mint, 2, new BN(10 ** 7), 1000);
+  await battleRoyale.createBattleground(
+    { v2: { collectionMint } },
+    mint,
+    2,
+    new BN(10 ** 7),
+    10000
+  );
 }
 
 main();

@@ -24,11 +24,22 @@ pub fn participant_action(
         BattleRoyaleError::InsufficientActionPoints
     );
 
-    participant.action_points_spent += action_points;
+    let spent_points: u32;
 
     match action_type {
         ActionType::Attack => {
-            let damage = participant.attack * action_points;
+            let health_left = target.health_points;
+            let mut points_needed = health_left / participant.attack;
+            if points_needed * participant.attack < health_left {
+                points_needed += 1;
+            }
+            spent_points = if points_needed > action_points {
+                action_points
+            } else {
+                points_needed
+            };
+            let damage = participant.attack * spent_points;
+
             if damage >= target.health_points {
                 target.alive = false;
                 target.health_points = 0;
@@ -38,7 +49,17 @@ pub fn participant_action(
             }
         }
         ActionType::Heal => {
-            let heal = participant.defense * action_points / 2;
+            let missing_health = 750 + (target.defense + 50) * 5 - target.health_points;
+            let mut points_needed = missing_health / (participant.defense / 2);
+            if points_needed * participant.defense / 2 < missing_health {
+                points_needed += 1;
+            }
+            spent_points = if points_needed > action_points {
+                action_points
+            } else {
+                points_needed
+            };
+            let heal = spent_points * participant.defense / 2;
             target.health_points = if target.health_points + heal > 750 + target.defense * 5 {
                 750 + target.defense * 5
             } else {
@@ -46,6 +67,8 @@ pub fn participant_action(
             };
         }
     };
+
+    participant.action_points_spent += spent_points;
 
     emit!(ParticipantActionEvent {
         battleground: ctx.accounts.battleground_state.key(),

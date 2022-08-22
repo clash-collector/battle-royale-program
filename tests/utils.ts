@@ -89,10 +89,10 @@ export const mintNft = async (
             createMetadataAccountArgs: {
               isMutable: false,
               data: {
-                name: "Pretty Cool NFT",
+                name: "SMB #64",
                 symbol,
                 sellerFeeBasisPoints: 10,
-                uri: "https://pretty-cool-nft.xyz/metadata",
+                uri: "https://arweave.net/sUPIVfYkE0M5tfuhNdUZjVl-2ugaffETmg3DQAnsjpM",
                 creators: [
                   {
                     address: creator.publicKey,
@@ -118,10 +118,10 @@ export const mintNft = async (
             createMetadataAccountArgsV2: {
               isMutable: false,
               data: {
-                name: "Pretty Cool NFT",
+                name: "SMB #64",
                 symbol,
                 sellerFeeBasisPoints: 10,
-                uri: "https://pretty-cool-nft.xyz/metadata",
+                uri: "https://arweave.net/sUPIVfYkE0M5tfuhNdUZjVl-2ugaffETmg3DQAnsjpM",
                 creators: [
                   {
                     address: creator.publicKey,

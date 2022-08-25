@@ -11,8 +11,8 @@ pub fn participant_action(
     action_type: ActionType,
     action_points: u32,
 ) -> Result<()> {
-    let participant = &mut ctx.accounts.participant_state;
-    let target = &mut ctx.accounts.target_participant_state;
+    let participant = &mut ctx.accounts.participant;
+    let target = &mut ctx.accounts.target_participant;
 
     require!(
         action_points_available(
@@ -72,7 +72,7 @@ pub fn participant_action(
 
     emit!(ParticipantActionEvent {
         battleground: ctx.accounts.battleground_state.key(),
-        participant: ctx.accounts.participant_state.key(),
+        participant: ctx.accounts.participant.key(),
         action_type,
         action_points_spent: action_points
     });
@@ -110,28 +110,28 @@ pub struct ParticipantAction<'info> {
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
             battleground_state.key().as_ref(),
-            participant_state.nft_mint.as_ref(),
+            participant.nft_mint.as_ref(),
         ],
         bump,
-        constraint = participant_state.alive,
+        constraint = participant.alive,
     )]
-    pub participant_state: Account<'info, ParticipantState>,
+    pub participant: Account<'info, ParticipantState>,
 
     #[account(
         mut,
         seeds = [
             PARTICIPANT_STATE_SEEDS.as_bytes(),
             battleground_state.key().as_ref(),
-            target_participant_state.nft_mint.as_ref(),
+            target_participant.nft_mint.as_ref(),
         ],
         bump,
-        constraint = participant_state.alive,
+        constraint = participant.alive,
     )]
-    pub target_participant_state: Account<'info, ParticipantState>,
+    pub target_participant: Account<'info, ParticipantState>,
 
     #[account(
         constraint = player_nft_token_account.owner == signer.key(),
-        constraint = player_nft_token_account.mint == participant_state.nft_mint,
+        constraint = player_nft_token_account.mint == participant.nft_mint,
         constraint = player_nft_token_account.amount == 1,
     )]
     pub player_nft_token_account: Box<Account<'info, TokenAccount>>,

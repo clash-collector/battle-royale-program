@@ -16,6 +16,12 @@ pub struct JoinBattlegroundEvent {
 }
 
 #[event]
+pub struct LeaveBattlegroundEvent {
+    pub battleground: Pubkey,
+    pub nft_mint: Pubkey,
+}
+
+#[event]
 pub struct StartBattleEvent {
     pub battleground: Pubkey,
 }

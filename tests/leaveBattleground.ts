@@ -4,12 +4,11 @@ import {
   getOrCreateAssociatedTokenAccount,
   transferChecked,
 } from "@solana/spl-token";
-import { expect } from "chai";
 import { Battleground, BattleRoyale, CollectionInfo, Participant } from "../ts";
-import { mintNft, mintToken, verifyCollection } from "./utils";
+import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
 import { airdropWallets, gameMaster } from "./common";
 
-describe("Participant action", () => {
+describe("Leave Battleground", () => {
   const nftSymbol = "DAPE";
 
   const creator = new anchor.Wallet(anchor.web3.Keypair.generate());
@@ -121,23 +120,15 @@ describe("Participant action", () => {
     // Start the battle
     await battleground.start();
     await new Promise((resolve) => setTimeout(() => resolve(undefined), 1000));
+
+    // Kill a participant
+    await participants[0].action(participants[1], { attack: {} }, 100);
+    await participants[0].finishBattle();
   });
 
-  it("does all actions", async () => {
-    const pointsSpent = 1;
-    await participants[0].action(participants[1], { attack: {} }, pointsSpent);
-    let state1 = await participants[0].getParticipantState();
-    let state2 = await participants[1].getParticipantState();
-
-    expect(state1.actionPointsSpent).to.equal(pointsSpent);
-    expect(state2.healthPoints).to.equal(750 + 5 * (defense + 50) - (100 + attack) * pointsSpent);
-
-    const pointsSpent2 = 2;
-    await participants[0].action(participants[1], { heal: {} }, pointsSpent2);
-    state2 = await participants[1].getParticipantState();
-
-    expect(state2.healthPoints).to.equal(
-      750 + 5 * (defense + 50) - (100 + attack) * pointsSpent + ((defense + 50) * pointsSpent2) / 2
-    );
+  it("leave the battleground", async () => {
+    await participants[1].getParticipantState();
+    await participants[1].leave();
+    await expectRevert(participants[1].getParticipantState(), "Account does not exist");
   });
 });

@@ -62,4 +62,8 @@ pub mod battle_royale_program {
     pub fn finish_battle(ctx: Context<FinishBattle>) -> Result<()> {
         instructions::finish_battle(ctx)
     }
+
+    pub fn leave_battleground(ctx: Context<LeaveBattleground>) -> Result<()> {
+        instructions::leave_battleground(ctx)
+    }
 }

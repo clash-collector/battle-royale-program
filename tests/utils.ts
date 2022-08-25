@@ -239,8 +239,10 @@ export async function expectRevert(promise: Promise<any>, msg?: string) {
     await promise;
     assert(false);
   } catch (e) {
-    if (e.errorLogs[0] && msg) {
+    if (e.errorLogs && e.errorLogs[0] && msg) {
       expect(e.errorLogs[0]).to.include(msg);
+    } else if (msg) {
+      expect(e).to.include(msg);
     }
   }
 }

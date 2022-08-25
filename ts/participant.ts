@@ -89,8 +89,8 @@ class Participant {
         signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
         battlegroundState: this.addresses.battleground,
-        participantState: this.addresses.participant,
-        targetParticipantState: target.addresses.participant,
+        participant: this.addresses.participant,
+        targetParticipant: target.addresses.participant,
         playerNftTokenAccount,
         clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
       })
@@ -128,6 +128,27 @@ class Participant {
         potAccount,
         winnerAccount,
         winnerNftTokenAccount,
+      })
+      .rpc({ skipPreflight: true });
+    await this.program.provider.connection.confirmTransaction(tx);
+  }
+
+  async leave() {
+    const playerNftTokenAccount = await getAssociatedTokenAddress(
+      this.nft,
+      this.program.provider.publicKey,
+      true
+    );
+
+    const tx = await this.program.methods
+      .leaveBattleground()
+      .accounts({
+        signer: this.program.provider.publicKey,
+        battleRoyale: this.addresses.battleRoyale,
+        battleground: this.addresses.battleground,
+        participant: this.addresses.participant,
+        nftMint: this.nft,
+        playerNftTokenAccount,
       })
       .rpc({ skipPreflight: true });
     await this.program.provider.connection.confirmTransaction(tx);

@@ -118,7 +118,7 @@ pub struct JoinBattleground<'info> {
     /// The participant account must not be alive or must be the winner of the last battle
     /// This prevents reentering with the same NFT
     #[account(
-        init_if_needed,
+        init,
         payer = signer,
         space = ParticipantState::LEN,
         seeds = [

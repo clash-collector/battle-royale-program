@@ -11,25 +11,29 @@ export default async function main() {
 
   console.log(`Pot token: ${mint.toString()}`);
 
-  const { mints, collectionMint } = await mintCollection(
-    provider,
-    "TEST",
-    gameMaster.payer,
-    [gameMaster.publicKey],
-    10
-  );
-  console.log(`Collection mint: ${collectionMint.toString()}`);
-  console.log(`Mints: ${mints.map((e) => e.toString())}`);
-
   const battleRoyale = new BattleRoyale(provider);
   await battleRoyale.initialize(gameMaster.publicKey, 1000);
-  await battleRoyale.createBattleground(
-    { v2: { collectionMint } },
-    mint,
-    2,
-    new BN(10 ** 7),
-    10000
-  );
+
+  const numberOfCollection = 2;
+  for (let i = 0; i < numberOfCollection; i++) {
+    const { mints, collectionMint } = await mintCollection(
+      provider,
+      "TEST1",
+      gameMaster.payer,
+      [gameMaster.publicKey],
+      5
+    );
+    console.log(`Collection mint: ${collectionMint.toString()}`);
+    console.log(`Mints: ${mints.map((e) => e.toString())}`);
+
+    await battleRoyale.createBattleground(
+      { v2: { collectionMint } },
+      mint,
+      2,
+      new BN(10 ** 7),
+      10000
+    );
+  }
 }
 
 main();

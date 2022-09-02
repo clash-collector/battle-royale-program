@@ -18,7 +18,7 @@ export default async function main() {
   for (let i = 0; i < numberOfCollection; i++) {
     const { mints, collectionMint } = await mintCollection(
       provider,
-      "TEST1",
+      `TEST${i}`,
       gameMaster.payer,
       [gameMaster.publicKey],
       5

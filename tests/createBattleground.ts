@@ -65,6 +65,9 @@ describe("Create a Battleground", () => {
       expect(state.actionPointsPerDay).to.equal(actionPointsPerDay);
       expect(state.potMint.toString()).to.equal(potMint.toString());
       expect(state.status[BattlegroundStatus.Preparing]).to.exist;
+
+      battleRoyaleState = await battleRoyale.getBattleRoyaleState();
+      expect(battleRoyaleState.lastBattlegroundId.toNumber()).to.equal(idBefore.toNumber() + 1);
     });
   });
 
@@ -107,6 +110,9 @@ describe("Create a Battleground", () => {
       expect(state.actionPointsPerDay).to.equal(actionPointsPerDay);
       expect(state.potMint.toString()).to.equal(potMint.toString());
       expect(state.status[BattlegroundStatus.Preparing]).to.exist;
+
+      battleRoyaleState = await battleRoyale.getBattleRoyaleState();
+      expect(battleRoyaleState.lastBattlegroundId.toNumber()).to.equal(idBefore.toNumber() + 1);
     });
   });
 });

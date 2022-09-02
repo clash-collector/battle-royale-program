@@ -7,7 +7,7 @@ import {
 } from "@solana/spl-token";
 import { expect } from "chai";
 import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo, Participant } from "../ts";
-import { mintNft, mintToken, verifyCollection } from "./utils";
+import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
 import { airdropWallets, gameMaster } from "./common";
 
 describe("Finish Battle", () => {
@@ -18,14 +18,13 @@ describe("Finish Battle", () => {
   const player2 = new anchor.Wallet(anchor.web3.Keypair.generate());
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
-  let nftMint: anchor.web3.PublicKey;
+  let nftMints: anchor.web3.PublicKey[] = [];
   let collectionMint: anchor.web3.PublicKey;
   let battleRoyale: BattleRoyale;
   let battleground: Battleground;
-  let participant1: Participant;
-  let participant2: Participant;
+  let participantsCap = 2;
+  let participants: Participant[] = Array(participantsCap);
   let fee: number;
-  let participantsCap = 1;
   let initialAmount = 100000;
   let entryFee = new anchor.BN(1000);
   let actionPointsPerDay = 8640000;
@@ -68,17 +67,19 @@ describe("Finish Battle", () => {
     collectionMint = collection;
 
     // Create tokens
-    const { mint } = await mintNft(
-      provider,
-      nftSymbol,
-      gameMaster.payer,
-      player.publicKey,
-      collectionMint
-    );
-    nftMint = mint;
+    for (let i = 0; i < participantsCap; i++) {
+      const { mint } = await mintNft(
+        provider,
+        nftSymbol,
+        gameMaster.payer,
+        player.publicKey,
+        collectionMint
+      );
+      nftMints.push(mint);
 
-    // Collection authority verifies that the NFT belongs to the collection
-    await verifyCollection(provider, mint, collectionMint, gameMaster.payer);
+      // Collection authority verifies that the NFT belongs to the collection
+      await verifyCollection(provider, mint, collectionMint, gameMaster.payer);
+    }
 
     collectionInfo = {
       v2: {
@@ -91,42 +92,85 @@ describe("Finish Battle", () => {
     // Initialize BattleRoyale
     fee = 100;
     await battleRoyale.initialize(gameMaster.publicKey, fee);
-
-    // Create the battleground
-    battleground = await battleRoyale.createBattleground(
-      collectionInfo,
-      potMint,
-      participantsCap,
-      entryFee,
-      actionPointsPerDay
-    );
-
-    // Join with one participant
-    let attack = 50;
-    let defense = 50;
-    participant1 = await battleground
-      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
-      .join(nftMint, attack, defense);
-
-    // Start the battle
-    await battleground.connect(new anchor.AnchorProvider(provider.connection, player, {})).start();
   });
 
-  it("finish battle", async () => {
-    await participant1.finishBattle();
-    let state = await battleground.getBattlegroundState();
+  describe("There is a winner", () => {
+    before(async () => {
+      // Create the battleground
+      battleground = await battleRoyale.createBattleground(
+        collectionInfo,
+        potMint,
+        participantsCap,
+        entryFee,
+        actionPointsPerDay
+      );
 
-    const winnerAccount = await getAssociatedTokenAddress(
-      participant1.addresses.potMint,
-      player.publicKey,
-      true
-    );
+      // Join with all participant
+      let attack = 50;
+      let defense = 50;
+      for (let i = 0; i < participantsCap; i++) {
+        participants[i] = await battleground
+          .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+          .join(nftMints[i], attack, defense);
+      }
 
-    expect(state.status[BattlegroundStatus.Preparing]).exist;
-    expect(state.participants).to.equal(1);
-    expect(state.lastWinner?.toString()).to.equal(nftMint.toString());
-    expect((await getAccount(provider.connection, winnerAccount)).amount.toString()).to.equal(
-      (initialAmount - (entryFee.toNumber() * fee) / 10000).toString()
-    );
+      // Start the battle
+      await battleground
+        .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+        .start();
+
+      // Kill the other participant
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 1000));
+      await participants[0].action(participants[1], { attack: {} }, 100);
+    });
+
+    it("finish battle", async () => {
+      await participants[0].finishBattle();
+      let state = await battleground.getBattlegroundState();
+
+      const winnerAccount = await getAssociatedTokenAddress(
+        participants[0].addresses.potMint,
+        player.publicKey,
+        true
+      );
+
+      expect(state.status[BattlegroundStatus.Preparing]).exist;
+      expect(state.participants).to.equal(1);
+      expect(state.lastWinner?.toString()).to.equal(nftMints[0].toString());
+      expect((await getAccount(provider.connection, winnerAccount)).amount.toString()).to.equal(
+        (initialAmount - (participantsCap * (entryFee.toNumber() * fee)) / 10000).toString()
+      );
+    });
+  });
+
+  describe("There is no winner", () => {
+    before(async () => {
+      // Create the battleground
+      battleground = await battleRoyale.createBattleground(
+        collectionInfo,
+        potMint,
+        participantsCap,
+        entryFee,
+        actionPointsPerDay
+      );
+
+      // Join with all participant
+      let attack = 50;
+      let defense = 50;
+      for (let i = 0; i < participantsCap; i++) {
+        participants[i] = await battleground
+          .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+          .join(nftMints[i], attack, defense);
+      }
+
+      // Start the battle
+      await battleground
+        .connect(new anchor.AnchorProvider(provider.connection, player, {}))
+        .start();
+    });
+
+    it("can't be finished", async () => {
+      await expectRevert(participants[0].finishBattle(), "A raw constraint was violated");
+    });
   });
 });

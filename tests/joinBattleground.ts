@@ -96,14 +96,14 @@ describe("Join a Battleground", () => {
       battleground
         .connect(new anchor.AnchorProvider(provider.connection, player, {}))
         .join(nftMints[0], attack, defense),
-      "ConstraintRaw"
+      "already in use"
     );
   });
 
   it("fails when it's full", async () => {
     let attack = 50;
     let defense = 50;
-    console.log();
+
     await battleground
       .connect(new anchor.AnchorProvider(provider.connection, player, {}))
       .join(nftMints[2], attack, defense);

@@ -127,7 +127,6 @@ pub struct JoinBattleground<'info> {
             nft_mint.key().as_ref(),
         ],
         bump,
-        constraint = !participant.alive || Some(participant.key()) == battleground.last_winner
     )]
     pub participant: Account<'info, ParticipantState>,
 

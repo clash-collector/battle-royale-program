@@ -17,6 +17,7 @@ import keccak256 from "keccak256";
 import MerkleTree from "merkletreejs";
 import { assert, expect } from "chai";
 import { gameMaster } from "./common";
+import { AnchorError, ProgramError } from "@project-serum/anchor";
 
 export const getMerkleTree = (mints: anchor.web3.PublicKey[]) => {
   const leaves = mints.map((x) => keccak256(x.toBuffer()));
@@ -238,11 +239,13 @@ export async function expectRevert(promise: Promise<any>, msg?: string) {
   try {
     await promise;
     assert(false);
-  } catch (e) {
-    if (e.errorLogs && e.errorLogs[0] && msg) {
-      expect(e.errorLogs[0]).to.include(msg);
-    } else if (msg) {
-      expect(e).to.include(msg);
+  } catch (err) {
+    if (msg) {
+      if (err instanceof ProgramError) {
+        expect(err.msg).to.include(msg);
+      } else if (err instanceof AnchorError) {
+        expect(err.logs.join("\n")).to.include(msg);
+      }
     }
   }
 }

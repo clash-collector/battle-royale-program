@@ -69,6 +69,14 @@ pub fn verify_collection(
     }
 }
 
+pub fn verify_holder(proof: Vec<[u8; 32]>, root: [u8; 32], holder: [u8; 32]) -> bool {
+    verify_proof(
+        proof,
+        root,
+        anchor_lang::solana_program::keccak::hash(&holder).0,
+    )
+}
+
 pub fn verify_proof(proof: Vec<[u8; 32]>, root: [u8; 32], leaf: [u8; 32]) -> bool {
     let mut computed_hash = leaf;
     for proof_element in proof.into_iter() {

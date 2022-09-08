@@ -1,10 +1,12 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+
 import { BATTLE_ROYALE_PROGRAM_ID, BATTLE_ROYALE_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
-import Battleground from "./battleground";
 import { BattleRoyaleAccount, CollectionInfo } from "./types";
+
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
+import Battleground from "./battleground";
+import { Program } from "@project-serum/anchor";
 
 class BattleRoyale {
   program: Program<BattleRoyaleProgram>;
@@ -39,11 +41,18 @@ class BattleRoyale {
     potMint: anchor.web3.PublicKey,
     participantsCap: number,
     entryFee: anchor.BN,
-    actionPointsPerDay: number
+    actionPointsPerDay: number,
+    whitelistRoot: number[] | null = null
   ) {
     const id = (await this.getBattleRoyaleState()).lastBattlegroundId.toNumber();
     const battleground = new Battleground(this, id, potMint, this.program.provider);
-    await battleground.create(collectionInfo, participantsCap, entryFee, actionPointsPerDay);
+    await battleground.create(
+      collectionInfo,
+      participantsCap,
+      entryFee,
+      actionPointsPerDay,
+      whitelistRoot
+    );
     return battleground;
   }
 
@@ -62,7 +71,6 @@ class BattleRoyale {
   }
 
   async fetchBattlegroundsByCollection(info: CollectionInfo) {
-    console.log(info);
     if (info.v1) {
       return await this.program.provider.connection.getProgramAccounts(BATTLE_ROYALE_PROGRAM_ID, {
         filters: [

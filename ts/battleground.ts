@@ -1,15 +1,17 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+
 import {
-  BATTLEGROUND_STATE_SEEDS,
   BATTLEGROUND_AUTHORITY_SEEDS,
+  BATTLEGROUND_STATE_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
 } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+
 import BattleRoyale from "./battleRoyale";
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";
+import { Program } from "@project-serum/anchor";
 
 class Battleground {
   program: Program<BattleRoyaleProgram>;
@@ -49,10 +51,17 @@ class Battleground {
     collectionInfo: CollectionInfo,
     participantsCap: number,
     entryFee: anchor.BN,
-    actionPointsPerDay: number
+    actionPointsPerDay: number,
+    whitelistRoot: number[] | null = null
   ) {
     const tx = await this.program.methods
-      .createBattleground(collectionInfo as any, participantsCap, entryFee, actionPointsPerDay)
+      .createBattleground(
+        collectionInfo as any,
+        participantsCap,
+        entryFee,
+        actionPointsPerDay,
+        whitelistRoot
+      )
       .accounts({
         signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,
@@ -66,10 +75,11 @@ class Battleground {
     nft: anchor.web3.PublicKey,
     attack: number,
     defense: number,
-    whitelistProof: number[][] | null = null
+    collectionWhitelistProof: number[][] | null = null,
+    holderWhitelistProof: number[][] | null = null
   ) {
     const participant = new Participant(this, nft, this.program.provider);
-    await participant.join(attack, defense, whitelistProof);
+    await participant.join(attack, defense, collectionWhitelistProof, holderWhitelistProof);
     return participant;
   }
 

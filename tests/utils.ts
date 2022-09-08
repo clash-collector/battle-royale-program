@@ -1,23 +1,18 @@
 import * as anchor from "@project-serum/anchor";
-import {
-  createAssociatedTokenAccount,
-  createMint,
-  getAccount,
-  mintTo,
-  mintToChecked,
-} from "@solana/spl-token";
+
+import { AnchorError, ProgramError } from "@project-serum/anchor";
 import {
   PROGRAM_ID as METADATA_PROGRAM_ID,
-  createCreateMetadataAccountV2Instruction,
-  createCreateMetadataAccountInstruction,
   createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountInstruction,
+  createCreateMetadataAccountV2Instruction,
   createVerifyCollectionInstruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import keccak256 from "keccak256";
-import MerkleTree from "merkletreejs";
 import { assert, expect } from "chai";
-import { gameMaster } from "./common";
-import { AnchorError, ProgramError } from "@project-serum/anchor";
+import { createAssociatedTokenAccount, createMint, mintTo, mintToChecked } from "@solana/spl-token";
+
+import MerkleTree from "merkletreejs";
+import keccak256 from "keccak256";
 
 export const getMerkleTree = (mints: anchor.web3.PublicKey[]) => {
   const leaves = mints.map((x) => keccak256(x.toBuffer()));

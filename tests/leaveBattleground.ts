@@ -1,12 +1,13 @@
 import * as anchor from "@project-serum/anchor";
+
+import { BattleRoyale, Battleground, CollectionInfo, Participant } from "../ts";
+import { airdropWallets, gameMaster } from "./common";
+import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
 import {
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
   transferChecked,
 } from "@solana/spl-token";
-import { Battleground, BattleRoyale, CollectionInfo, Participant } from "../ts";
-import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
-import { airdropWallets, gameMaster } from "./common";
 
 describe("Leave Battleground", () => {
   const nftSymbol = "DAPE";

@@ -12,7 +12,8 @@ pub fn join_battleground(
     ctx: Context<JoinBattleground>,
     attack: u32,
     defense: u32,
-    _whitelist_proof: Option<Vec<[u8; 32]>>,
+    _collection_whitelist_proof: Option<Vec<[u8; 32]>>,
+    _holder_whitelist_proof: Option<Vec<[u8; 32]>>,
 ) -> Result<()> {
     require!(
         attack + defense <= 100,
@@ -71,9 +72,17 @@ pub fn join_battleground(
 }
 
 #[derive(Accounts)]
-#[instruction(_attack: u32, _defense: u32, whitelist_proof: Option<Vec<[u8; 32]>>)]
+#[instruction(
+    _attack: u32,
+    _defense: u32,
+    collection_whitelist_proof: Option<Vec<[u8; 32]>>,
+    holder_whitelist_proof: Option<Vec<[u8; 32]>>
+)]
 pub struct JoinBattleground<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = holder_whitelist_proof.is_none() || verify_holder(holder_whitelist_proof.unwrap(), battleground.whitelist_root.unwrap(), signer.key().to_bytes())
+    )]
     pub signer: Signer<'info>,
 
     /// CHECK: Checking correspondance with battle royale state
@@ -143,7 +152,7 @@ pub struct JoinBattleground<'info> {
     #[account(
         address = mpl_token_metadata::pda::find_metadata_account(&nft_mint.key()).0,
         constraint = mpl_token_metadata::check_id(nft_metadata.owner),
-        constraint = verify_collection(&nft_metadata, &battleground.collection_info, whitelist_proof) @ BattleRoyaleError::CollectionVerificationFailed
+        constraint = verify_collection(&nft_metadata, &battleground.collection_info, collection_whitelist_proof) @ BattleRoyaleError::CollectionVerificationFailed
     )]
     pub nft_metadata: UncheckedAccount<'info>,
 

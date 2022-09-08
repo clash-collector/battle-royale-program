@@ -1,20 +1,29 @@
 import * as anchor from "@project-serum/anchor";
-import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
-import { expect } from "chai";
-import { Battleground, BattleRoyale, CollectionInfo } from "../ts";
+
+import { BattleRoyale, Battleground, CollectionInfo } from "../ts";
 import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
-import { expectRevert, mintCollection, mintNft, mintToken, verifyCollection } from "./utils";
+import {
+  expectRevert,
+  getMerkleProof,
+  getMerkleTree,
+  mintCollection,
+  mintNft,
+  mintToken,
+  verifyCollection,
+} from "./utils";
+import { getAccount, getAssociatedTokenAddress } from "@solana/spl-token";
+
+import MerkleTree from "merkletreejs";
+import { expect } from "chai";
+import keccak256 from "keccak256";
 
 describe("Join a Battleground", () => {
   const nftSymbol = "DAPE";
-  // Addresses of verified creators of the NFT collection
-  const creatorAddresses: anchor.web3.PublicKey[] = [...Array(5)].map(
-    () => new anchor.web3.Keypair().publicKey
-  );
 
   const creator = new anchor.Wallet(anchor.web3.Keypair.generate());
-  const player = new anchor.Wallet(anchor.web3.Keypair.generate());
-  const player2 = new anchor.Wallet(anchor.web3.Keypair.generate());
+  const players = Array(2)
+    .fill(0)
+    .map((e) => new anchor.Wallet(anchor.web3.Keypair.generate()));
   let provider: anchor.AnchorProvider;
   let potMint: anchor.web3.PublicKey;
   let nftMints: anchor.web3.PublicKey[];
@@ -30,16 +39,16 @@ describe("Join a Battleground", () => {
   before(async () => {
     provider = new anchor.AnchorProvider(defaultProvider.connection, gameMaster, {});
 
-    await airdropWallets([gameMaster, creator, player, player2], provider);
+    await airdropWallets([gameMaster, creator, ...players], provider);
 
     /// Create the pot token and mint some to the player
-    potMint = (await mintToken(provider, creator.payer, player.publicKey, initialAmount)).mint;
+    potMint = (await mintToken(provider, creator.payer, players[0].publicKey, initialAmount)).mint;
     // Create the collection
     const { mints, collectionMint } = await mintCollection(
       provider,
       nftSymbol,
       gameMaster.payer,
-      [player.publicKey, player2.publicKey],
+      players.map((e) => e.publicKey),
       4
     );
     nftMints = mints;
@@ -55,63 +64,146 @@ describe("Join a Battleground", () => {
     // Initialize BattleRoyale
     fee = 100;
     await battleRoyale.initialize(gameMaster.publicKey, fee);
-    battleground = await battleRoyale.createBattleground(
-      collectionInfo,
-      potMint,
-      participantsCap,
-      entryFee,
-      actionPointsPerDay
-    );
   });
 
-  it("join a battleground", async () => {
-    let attack = 50;
-    let defense = 50;
-    const participant = await battleground
-      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
-      .join(nftMints[0], attack, defense);
-    const state = await participant.getParticipantState();
+  describe("without whitelisting holders", () => {
+    before(async () => {
+      battleground = await battleRoyale.createBattleground(
+        collectionInfo,
+        potMint,
+        participantsCap,
+        entryFee,
+        actionPointsPerDay
+      );
+    });
 
-    expect(state.battleground.toString()).to.equal(participant.addresses.battleground.toString());
-    expect(state.nftMint.toString()).to.equal(participant.nft.toString());
-    expect(state.attack).to.equal(100 + attack);
-    expect(state.defense).to.equal(50 + defense);
-    expect(state.alive).to.equal(true);
-    expect(
-      (
-        await getAccount(
-          provider.connection,
-          await getAssociatedTokenAddress(potMint, player.publicKey)
-        )
-      ).amount.toString()
-    ).to.equal((initialAmount - (initialAmount * fee) / 10000).toString());
+    it("join a battleground", async () => {
+      let attack = 50;
+      let defense = 50;
+      const participant = await battleground
+        .connect(new anchor.AnchorProvider(provider.connection, players[0], {}))
+        .join(nftMints[0], attack, defense);
+      const state = await participant.getParticipantState();
 
-    expect((await battleground.getBattlegroundState()).participants).to.equal(1);
+      expect(state.battleground.toString()).to.equal(participant.addresses.battleground.toString());
+      expect(state.nftMint.toString()).to.equal(participant.nft.toString());
+      expect(state.attack).to.equal(100 + attack);
+      expect(state.defense).to.equal(50 + defense);
+      expect(state.alive).to.equal(true);
+      expect(
+        (
+          await getAccount(
+            provider.connection,
+            await getAssociatedTokenAddress(potMint, players[0].publicKey)
+          )
+        ).amount.toString()
+      ).to.equal((initialAmount - (initialAmount * fee) / 10000).toString());
+
+      expect((await battleground.getBattlegroundState()).participants).to.equal(1);
+    });
+
+    it("fails when reentering with the same token", async () => {
+      let attack = 50;
+      let defense = 50;
+      await expectRevert(
+        battleground
+          .connect(new anchor.AnchorProvider(provider.connection, players[0], {}))
+          .join(nftMints[0], attack, defense),
+        "already in use"
+      );
+    });
+
+    it("fails when it's full", async () => {
+      let attack = 50;
+      let defense = 50;
+
+      await battleground
+        .connect(new anchor.AnchorProvider(provider.connection, players[0], {}))
+        .join(nftMints[2], attack, defense);
+      await expectRevert(
+        battleground
+          .connect(new anchor.AnchorProvider(provider.connection, players[1], {}))
+          .join(nftMints[1], attack, defense),
+        "ConstraintRaw"
+      );
+    });
   });
 
-  it("fails when reentering with the same token", async () => {
-    let attack = 50;
-    let defense = 50;
-    await expectRevert(
-      battleground
-        .connect(new anchor.AnchorProvider(provider.connection, player, {}))
-        .join(nftMints[0], attack, defense),
-      "already in use"
-    );
-  });
+  describe("whitelisting holders", () => {
+    let merkleTree: MerkleTree;
+    const leaves = [
+      players[0].publicKey,
+      ...Array(10)
+        .fill(0)
+        .map(() => anchor.web3.Keypair.generate().publicKey),
+    ].map((e) => keccak256(e.toBuffer()));
 
-  it("fails when it's full", async () => {
-    let attack = 50;
-    let defense = 50;
+    before(async () => {
+      merkleTree = new MerkleTree(leaves, keccak256, { sort: true });
+      battleground = await battleRoyale.createBattleground(
+        collectionInfo,
+        potMint,
+        participantsCap,
+        entryFee,
+        actionPointsPerDay,
+        [...merkleTree.getRoot()]
+      );
+    });
 
-    await battleground
-      .connect(new anchor.AnchorProvider(provider.connection, player, {}))
-      .join(nftMints[2], attack, defense);
-    await expectRevert(
-      battleground
-        .connect(new anchor.AnchorProvider(provider.connection, player2, {}))
-        .join(nftMints[1], attack, defense),
-      "ConstraintRaw"
-    );
+    it("join a battleground", async () => {
+      let attack = 50;
+      let defense = 50;
+      const leaf = keccak256(players[0].publicKey.toBuffer());
+      const amountBefore = new anchor.BN(
+        (
+          await getAccount(
+            provider.connection,
+            await getAssociatedTokenAddress(potMint, players[0].publicKey)
+          )
+        ).amount.toString()
+      ).toNumber();
+      const participant = await battleground
+        .connect(new anchor.AnchorProvider(provider.connection, players[0], {}))
+        .join(
+          nftMints[0],
+          attack,
+          defense,
+          null,
+          merkleTree.getProof(leaf).map((e) => [...e.data])
+        );
+      const state = await participant.getParticipantState();
+
+      expect(state.battleground.toString()).to.equal(participant.addresses.battleground.toString());
+      expect(state.nftMint.toString()).to.equal(participant.nft.toString());
+      expect(state.attack).to.equal(100 + attack);
+      expect(state.defense).to.equal(50 + defense);
+      expect(state.alive).to.equal(true);
+      expect(
+        (
+          await getAccount(
+            provider.connection,
+            await getAssociatedTokenAddress(potMint, players[0].publicKey)
+          )
+        ).amount.toString()
+      ).to.equal((amountBefore - entryFee.toNumber()).toString());
+
+      expect((await battleground.getBattlegroundState()).participants).to.equal(1);
+    });
+
+    it("not whitelisted holder", async () => {
+      let attack = 50;
+      let defense = 50;
+      const leaf = keccak256(players[0].publicKey.toBuffer());
+      await expectRevert(
+        battleground.connect(new anchor.AnchorProvider(provider.connection, players[1], {})).join(
+          nftMints[0],
+          attack,
+          defense,
+          null,
+          merkleTree.getProof(leaf).map((e) => [...e.data])
+        ),
+        "ConstraintRaw"
+      );
+    });
   });
 });

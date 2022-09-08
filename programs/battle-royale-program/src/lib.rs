@@ -28,6 +28,7 @@ pub mod battle_royale_program {
         participants_cap: u32,
         entry_fee: u64,
         action_points_per_day: u32,
+        whitelist_root: Option<[u8; 32]>,
     ) -> Result<()> {
         instructions::create_battleground(
             ctx,
@@ -35,6 +36,7 @@ pub mod battle_royale_program {
             participants_cap,
             entry_fee,
             action_points_per_day,
+            whitelist_root,
         )
     }
 
@@ -42,9 +44,16 @@ pub mod battle_royale_program {
         ctx: Context<JoinBattleground>,
         attack: u32,
         defense: u32,
-        whitelist_root: Option<Vec<[u8; 32]>>,
+        collection_whitelist_root: Option<Vec<[u8; 32]>>,
+        holder_whitelist_root: Option<Vec<[u8; 32]>>,
     ) -> Result<()> {
-        instructions::join_battleground(ctx, attack, defense, whitelist_root)
+        instructions::join_battleground(
+            ctx,
+            attack,
+            defense,
+            collection_whitelist_root,
+            holder_whitelist_root,
+        )
     }
 
     pub fn start_battle(ctx: Context<StartBattle>) -> Result<()> {

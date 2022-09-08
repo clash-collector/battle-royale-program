@@ -13,6 +13,7 @@ pub fn create_battleground(
     participants_cap: u32,
     entry_fee: u64,
     action_points_per_day: u32,
+    whitelist_root: Option<[u8; 32]>,
 ) -> Result<()> {
     match collection_info {
         CollectionInfo::V1 {
@@ -49,6 +50,7 @@ pub fn create_battleground(
         pot_mint: ctx.accounts.pot_mint.key(),
         entry_fee,
         last_winner: None,
+        whitelist_root,
     };
 
     ctx.accounts.battle_royale_state.last_battleground_id += 1;

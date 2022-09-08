@@ -1,12 +1,14 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+
 import { BATTLE_ROYALE_PROGRAM_ID, PARTICIPANT_STATE_SEEDS } from "./constants";
-import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
-import Battleground from "./battleground";
-import { getTokenMetadata } from "./utils";
+
 import { ActionType } from "./types";
+import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
+import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
+import Battleground from "./battleground";
+import { Program } from "@project-serum/anchor";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
+import { getTokenMetadata } from "./utils";
 
 class Participant {
   program: Program<BattleRoyaleProgram>;
@@ -35,7 +37,12 @@ class Participant {
     };
   }
 
-  async join(attack: number, defense: number, whitelistProof: number[][] | null = null) {
+  async join(
+    attack: number,
+    defense: number,
+    collectionWhitelistProof: number[][] | null = null,
+    holderWhitelistProof: number[][] | null = null
+  ) {
     const gameMaster = (await this.battleground.battleRoyale.getBattleRoyaleState()).gameMaster;
 
     const potAccount = await getAssociatedTokenAddress(
@@ -56,7 +63,7 @@ class Participant {
     );
 
     const tx = await this.program.methods
-      .joinBattleground(attack, defense, whitelistProof)
+      .joinBattleground(attack, defense, collectionWhitelistProof, holderWhitelistProof)
       .accounts({
         signer: this.program.provider.publicKey,
         gameMaster,

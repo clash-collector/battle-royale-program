@@ -63,7 +63,7 @@ describe("Join a Battleground", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
   });
 
   describe("without whitelisting holders", () => {

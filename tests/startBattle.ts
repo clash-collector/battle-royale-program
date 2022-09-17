@@ -1,8 +1,10 @@
 import * as anchor from "@project-serum/anchor";
-import { expect } from "chai";
-import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo } from "../ts";
-import { mintCollection, mintToken } from "./utils";
+
+import { BattleRoyale, Battleground, BattlegroundStatus, CollectionInfo } from "../ts";
 import { airdropWallets, gameMaster } from "./common";
+import { mintCollection, mintToken } from "./utils";
+
+import { expect } from "chai";
 
 describe("Start a Battleground", () => {
   const nftSymbol = "DAPE";
@@ -45,7 +47,7 @@ describe("Start a Battleground", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
     // Create the battleground
     battleground = await battleRoyale.createBattleground(

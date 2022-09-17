@@ -1,14 +1,16 @@
 import * as anchor from "@project-serum/anchor";
+
+import { BattleRoyale, Battleground, BattlegroundStatus, CollectionInfo, Participant } from "../ts";
+import { airdropWallets, gameMaster } from "./common";
+import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
 import {
   getAccount,
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
   transferChecked,
 } from "@solana/spl-token";
+
 import { expect } from "chai";
-import { Battleground, BattlegroundStatus, BattleRoyale, CollectionInfo, Participant } from "../ts";
-import { expectRevert, mintNft, mintToken, verifyCollection } from "./utils";
-import { airdropWallets, gameMaster } from "./common";
 
 describe("Finish Battle", () => {
   const nftSymbol = "DAPE";
@@ -91,7 +93,7 @@ describe("Finish Battle", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
   });
 
   describe("There is a winner", () => {

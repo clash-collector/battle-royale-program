@@ -99,7 +99,7 @@ describe("Leave Battleground", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
     // Create the battleground
     battleground = await battleRoyale.createBattleground(

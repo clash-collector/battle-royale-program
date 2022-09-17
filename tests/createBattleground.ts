@@ -1,9 +1,11 @@
 import * as anchor from "@project-serum/anchor";
-import { createMint } from "@solana/spl-token";
-import { expect } from "chai";
-import { Battleground, BattleRoyale, BattlegroundStatus, CollectionInfo } from "../ts";
+
+import { BattleRoyale, Battleground, BattlegroundStatus, CollectionInfo } from "../ts";
 import { airdropWallets, defaultProvider, gameMaster, smbMints } from "./common";
 import { getMerkleTree, mintCollection } from "./utils";
+
+import { createMint } from "@solana/spl-token";
+import { expect } from "chai";
 
 describe("Create a Battleground", () => {
   const nftSymbol = "DAPE";
@@ -24,7 +26,7 @@ describe("Create a Battleground", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
   });
 
   describe("For Metaplex v1.0 collections", () => {

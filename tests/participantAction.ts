@@ -1,13 +1,15 @@
 import * as anchor from "@project-serum/anchor";
+
+import { BattleRoyale, Battleground, CollectionInfo, Participant } from "../ts";
+import { airdropWallets, gameMaster } from "./common";
 import {
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
   transferChecked,
 } from "@solana/spl-token";
-import { expect } from "chai";
-import { Battleground, BattleRoyale, CollectionInfo, Participant } from "../ts";
 import { mintNft, mintToken, verifyCollection } from "./utils";
-import { airdropWallets, gameMaster } from "./common";
+
+import { expect } from "chai";
 
 describe("Participant action", () => {
   const nftSymbol = "DAPE";
@@ -99,7 +101,7 @@ describe("Participant action", () => {
 
     // Initialize BattleRoyale
     fee = 100;
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
     // Create the battleground
     battleground = await battleRoyale.createBattleground(

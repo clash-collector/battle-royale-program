@@ -1,10 +1,12 @@
 import * as anchor from "@project-serum/anchor";
+
+import { airdropWallets, defaultProvider, gameMaster } from "./common";
+
+import { BattleRoyale } from "../ts";
+import { Keypair } from "@solana/web3.js";
 import { createMint } from "@solana/spl-token";
 import { expect } from "chai";
-import { BattleRoyale } from "../ts";
-import { airdropWallets, defaultProvider, gameMaster } from "./common";
 import { expectRevert } from "./utils";
-import { Keypair } from "@solana/web3.js";
 
 describe("Initializing a Battle Royale", () => {
   // Configure the client to use the local cluster.
@@ -35,7 +37,7 @@ describe("Initializing a Battle Royale", () => {
     let state = await battleRoyale.getBattleRoyaleState();
     const idBefore = state.lastBattlegroundId;
 
-    await battleRoyale.initialize(gameMaster.publicKey, fee);
+    await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
     state = await battleRoyale.getBattleRoyaleState();
 
@@ -49,7 +51,7 @@ describe("Initializing a Battle Royale", () => {
       let state = await battleRoyale.getBattleRoyaleState();
       const feeBefore = state.fee;
 
-      await battleRoyale.initialize(gameMaster.publicKey, feeBefore * 2);
+      await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, feeBefore * 2);
 
       state = await battleRoyale.getBattleRoyaleState();
 
@@ -64,7 +66,7 @@ describe("Initializing a Battle Royale", () => {
       await expectRevert(
         battleRoyale
           .connect(new anchor.AnchorProvider(provider.connection, stranger, {}))
-          .initialize(gameMaster.publicKey, feeBefore * 2),
+          .initialize(gameMaster.publicKey, gameMaster.publicKey, feeBefore * 2),
         "ConstraintRaw"
       );
     });

@@ -5,12 +5,13 @@ use anchor_lang::prelude::*;
 pub struct BattleRoyaleState {
     pub bump: u8,
     pub game_master: Pubkey,
+    pub dev_fund: Pubkey,
     pub fee: u16,
     pub last_battleground_id: u64,
 }
 
 impl BattleRoyaleState {
-    pub const LEN: usize = 8 + 1 + 2 + 32 + 8;
+    pub const LEN: usize = 8 + 1 + 2 + 2 * 32 + 8;
 }
 
 #[repr(u8)]

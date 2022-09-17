@@ -87,7 +87,7 @@ pub struct JoinBattleground<'info> {
 
     /// CHECK: Checking correspondance with battle royale state
     #[account(mut)]
-    pub game_master: AccountInfo<'info>,
+    pub dev_fund: AccountInfo<'info>,
 
     /// The Battle Royale state
     #[account(
@@ -95,7 +95,7 @@ pub struct JoinBattleground<'info> {
             BATTLE_ROYALE_STATE_SEEDS.as_bytes(),
         ],
         bump,
-        has_one = game_master,
+        has_one = dev_fund,
     )]
     pub battle_royale: Box<Account<'info, BattleRoyaleState>>,
 
@@ -168,7 +168,7 @@ pub struct JoinBattleground<'info> {
         init_if_needed,
         payer = signer,
         associated_token::mint = pot_mint,
-        associated_token::authority = game_master,
+        associated_token::authority = dev_fund,
     )]
     pub dev_account: Box<Account<'info, TokenAccount>>,
 

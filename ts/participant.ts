@@ -66,7 +66,7 @@ class Participant {
       .joinBattleground(attack, defense, collectionWhitelistProof, holderWhitelistProof)
       .accounts({
         signer: this.program.provider.publicKey,
-        gameMaster,
+        devFund: gameMaster,
         battleRoyale: this.addresses.battleRoyale,
         authority: this.addresses.authority,
         battleground: this.addresses.battleground,

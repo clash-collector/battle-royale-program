@@ -4,10 +4,16 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::*;
 use anchor_spl::token::*;
 
-pub fn initialize(ctx: Context<Initialize>, game_master: Pubkey, fee: u16) -> Result<()> {
+pub fn initialize(
+    ctx: Context<Initialize>,
+    game_master: Pubkey,
+    dev_fund: Pubkey,
+    fee: u16,
+) -> Result<()> {
     *ctx.accounts.battle_royale_state = BattleRoyaleState {
         bump: *ctx.bumps.get("battle_royale_state").unwrap(),
         game_master,
+        dev_fund,
         fee,
         last_battleground_id: if ctx.accounts.battle_royale_state.game_master != Pubkey::default() {
             ctx.accounts.battle_royale_state.last_battleground_id

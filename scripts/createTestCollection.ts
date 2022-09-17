@@ -1,8 +1,10 @@
 import * as anchor from "@project-serum/anchor";
+
+import { mintCollection, mintToken } from "../tests/utils";
+
 import { BN } from "bn.js";
 import { BattleRoyale } from "../ts";
 import { gameMaster } from "../tests/common";
-import { mintCollection, mintToken } from "../tests/utils";
 
 export default async function main() {
   const provider = anchor.AnchorProvider.env();
@@ -12,7 +14,7 @@ export default async function main() {
   console.log(`Pot token: ${mint.toString()}`);
 
   const battleRoyale = new BattleRoyale(provider);
-  await battleRoyale.initialize(gameMaster.publicKey, 1000);
+  await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, 1000);
 
   const numberOfCollection = 2;
   for (let i = 0; i < numberOfCollection; i++) {

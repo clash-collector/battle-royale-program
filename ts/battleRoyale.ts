@@ -25,9 +25,9 @@ class BattleRoyale {
     };
   }
 
-  async initialize(gameMaster: anchor.web3.PublicKey, fee: number) {
+  async initialize(gameMaster: anchor.web3.PublicKey, devFund: anchor.web3.PublicKey, fee: number) {
     const tx = await this.program.methods
-      .initialize(gameMaster, fee)
+      .initialize(gameMaster, devFund, fee)
       .accounts({
         signer: this.program.provider.publicKey,
         battleRoyaleState: this.addresses.battleRoyale,

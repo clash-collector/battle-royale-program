@@ -29,6 +29,7 @@ describe("Finish Battle", () => {
   let fee: number;
   let initialAmount = 100000;
   let entryFee = new anchor.BN(1000);
+  let creatorFee = 100;
   let actionPointsPerDay = 8640000;
   let collectionInfo: CollectionInfo;
 
@@ -98,12 +99,16 @@ describe("Finish Battle", () => {
 
   describe("There is a winner", () => {
     before(async () => {
+      creatorFee = 100;
+
       // Create the battleground
       battleground = await battleRoyale.createBattleground(
         collectionInfo,
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay
       );
 
@@ -140,7 +145,10 @@ describe("Finish Battle", () => {
       expect(state.participants).to.equal(1);
       expect(state.lastWinner?.toString()).to.equal(nftMints[0].toString());
       expect((await getAccount(provider.connection, winnerAccount)).amount.toString()).to.equal(
-        (initialAmount - (participantsCap * (entryFee.toNumber() * fee)) / 10000).toString()
+        (
+          initialAmount -
+          (participantsCap * (entryFee.toNumber() * (fee + creatorFee))) / 10000
+        ).toString()
       );
     });
   });
@@ -153,6 +161,8 @@ describe("Finish Battle", () => {
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay
       );
 

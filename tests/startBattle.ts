@@ -20,6 +20,7 @@ describe("Start a Battleground", () => {
   let participantsCap = 1;
   let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
+  let creatorFee = 100;
   let actionPointsPerDay = 10;
   let collectionInfo: CollectionInfo;
 
@@ -55,6 +56,8 @@ describe("Start a Battleground", () => {
       potMint,
       participantsCap,
       entryFee,
+      creator.publicKey,
+      creatorFee,
       actionPointsPerDay
     );
 

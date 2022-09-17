@@ -33,6 +33,7 @@ describe("Join a Battleground", () => {
   let participantsCap = 2;
   let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
+  let creatorFee = 100;
   let actionPointsPerDay = 10;
   let collectionInfo: CollectionInfo;
 
@@ -67,12 +68,16 @@ describe("Join a Battleground", () => {
   });
 
   describe("without whitelisting holders", () => {
+    creatorFee = 100;
+
     before(async () => {
       battleground = await battleRoyale.createBattleground(
         collectionInfo,
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay
       );
     });
@@ -145,6 +150,8 @@ describe("Join a Battleground", () => {
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay,
         [...merkleTree.getRoot()]
       );

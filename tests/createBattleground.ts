@@ -15,9 +15,14 @@ describe("Create a Battleground", () => {
   let potMint: anchor.web3.PublicKey;
   let battleRoyale: BattleRoyale;
   let fee: number;
+  let creatorFee = 100;
 
   before(async () => {
-    provider = new anchor.AnchorProvider(defaultProvider.connection, gameMaster, {});
+    provider = new anchor.AnchorProvider(
+      defaultProvider.connection,
+      gameMaster,
+      defaultProvider.opts
+    );
 
     await airdropWallets([gameMaster, creator], provider);
 
@@ -50,11 +55,15 @@ describe("Create a Battleground", () => {
       let battleRoyaleState = await battleRoyale.getBattleRoyaleState();
       const idBefore = battleRoyaleState.lastBattlegroundId;
 
+      let creatorFee = 50;
+
       const battleground = await battleRoyale.createBattleground(
         collectionInfo,
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay
       );
       let state = await battleground.getBattlegroundState();
@@ -64,6 +73,8 @@ describe("Create a Battleground", () => {
       expect(state.actionPointsPerDay).to.equal(actionPointsPerDay);
       expect(state.participantsCap).to.equal(participantsCap);
       expect(state.entryFee.toString()).to.equal(entryFee.toString());
+      expect(state.creator.toString()).to.equal(creator.publicKey.toString());
+      expect(state.creatorFee).to.equal(creatorFee);
       expect(state.actionPointsPerDay).to.equal(actionPointsPerDay);
       expect(state.potMint.toString()).to.equal(potMint.toString());
       expect(state.status[BattlegroundStatus.Preparing]).to.exist;
@@ -100,6 +111,8 @@ describe("Create a Battleground", () => {
         potMint,
         participantsCap,
         entryFee,
+        creator.publicKey,
+        creatorFee,
         actionPointsPerDay
       );
       let state = await battleground.getBattlegroundState();

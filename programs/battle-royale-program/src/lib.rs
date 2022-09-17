@@ -32,6 +32,8 @@ pub mod battle_royale_program {
         collection_info: CollectionInfo,
         participants_cap: u32,
         entry_fee: u64,
+        creator: Pubkey,
+        creator_fee: u16,
         action_points_per_day: u32,
         whitelist_root: Option<[u8; 32]>,
     ) -> Result<()> {
@@ -40,6 +42,8 @@ pub mod battle_royale_program {
             collection_info,
             participants_cap,
             entry_fee,
+            creator,
+            creator_fee,
             action_points_per_day,
             whitelist_root,
         )

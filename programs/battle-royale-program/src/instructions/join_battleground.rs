@@ -34,6 +34,7 @@ pub fn join_battleground(
 
     let entry_fee = ctx.accounts.battleground.entry_fee;
     let dev_fee = entry_fee * (ctx.accounts.battle_royale.fee as u64) / 10000;
+    let creator_fee = entry_fee * (ctx.accounts.battleground.creator_fee as u64) / 10000;
 
     msg!(
         "Paying {} to the pot, {} to the treasury",
@@ -50,7 +51,7 @@ pub fn join_battleground(
             authority: ctx.accounts.signer.to_account_info().clone(),
         },
     );
-    token::transfer(transfer_entry_fee_ctx, entry_fee - dev_fee)?;
+    token::transfer(transfer_entry_fee_ctx, entry_fee - dev_fee - creator_fee)?;
     let transfer_dev_fee_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info().clone(),
         token::Transfer {
@@ -60,6 +61,15 @@ pub fn join_battleground(
         },
     );
     token::transfer(transfer_dev_fee_ctx, dev_fee)?;
+    let transfer_creator_fee_ctx = CpiContext::new(
+        ctx.accounts.token_program.to_account_info().clone(),
+        token::Transfer {
+            from: ctx.accounts.player_account.to_account_info().clone(),
+            to: ctx.accounts.creator_account.to_account_info().clone(),
+            authority: ctx.accounts.signer.to_account_info().clone(),
+        },
+    );
+    token::transfer(transfer_creator_fee_ctx, creator_fee)?;
 
     emit!(JoinBattlegroundEvent {
         battleground: ctx.accounts.battleground.key(),
@@ -109,6 +119,11 @@ pub struct JoinBattleground<'info> {
     )]
     pub authority: AccountInfo<'info>,
 
+    /// Creator of the battlegrounf that owns the creator fee
+    /// CHECK: Matches the battleground's creator
+    #[account(mut)]
+    pub creator: AccountInfo<'info>,
+
     /// The battleground the participant is entering
     #[account(
         mut,
@@ -118,6 +133,7 @@ pub struct JoinBattleground<'info> {
         ],
         bump,
         has_one = pot_mint,
+        has_one = creator,
         constraint = battleground.participants < battleground.participants_cap,
         constraint = battleground.status == BattlegroundStatus::Preparing @ BattleRoyaleError::WrongBattlegroundStatus,
     )]
@@ -171,6 +187,14 @@ pub struct JoinBattleground<'info> {
         associated_token::authority = dev_fund,
     )]
     pub dev_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        init_if_needed,
+        payer = signer,
+        associated_token::mint = pot_mint,
+        associated_token::authority = creator,
+    )]
+    pub creator_account: Box<Account<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,

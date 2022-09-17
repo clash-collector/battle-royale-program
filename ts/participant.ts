@@ -1,27 +1,29 @@
 import * as anchor from "@project-serum/anchor";
 
 import { BATTLE_ROYALE_PROGRAM_ID, PARTICIPANT_STATE_SEEDS } from "./constants";
+import Battleground, { BattlegroundAddresses } from "./battleground";
 
 import { ActionType } from "./types";
 import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
 import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
-import Battleground from "./battleground";
 import { Program } from "@project-serum/anchor";
 import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { getTokenMetadata } from "./utils";
+
+export interface ParticipantAddresses extends BattlegroundAddresses {
+  battleRoyale: anchor.web3.PublicKey;
+  authority: anchor.web3.PublicKey;
+  battleground: anchor.web3.PublicKey;
+  potMint: anchor.web3.PublicKey;
+  participant: anchor.web3.PublicKey;
+}
 
 class Participant {
   program: Program<BattleRoyaleProgram>;
   battleground: Battleground;
   nft: anchor.web3.PublicKey;
   nftMetadata: anchor.web3.PublicKey;
-  addresses: {
-    battleRoyale: anchor.web3.PublicKey;
-    authority: anchor.web3.PublicKey;
-    battleground: anchor.web3.PublicKey;
-    potMint: anchor.web3.PublicKey;
-    participant: anchor.web3.PublicKey;
-  };
+  addresses: ParticipantAddresses;
 
   constructor(battleground: Battleground, nft: anchor.web3.PublicKey, provider: anchor.Provider) {
     this.connect(provider);
@@ -51,6 +53,11 @@ class Participant {
       true
     );
     const devAccount = await getAssociatedTokenAddress(this.addresses.potMint, gameMaster, true);
+    const creatorAccount = await getAssociatedTokenAddress(
+      this.addresses.potMint,
+      this.addresses.creator,
+      true
+    );
     const playerAccount = await getAssociatedTokenAddress(
       this.addresses.potMint,
       this.program.provider.publicKey,
@@ -69,6 +76,7 @@ class Participant {
         devFund: gameMaster,
         battleRoyale: this.addresses.battleRoyale,
         authority: this.addresses.authority,
+        creator: this.addresses.creator,
         battleground: this.addresses.battleground,
         participant: this.addresses.participant,
         potMint: this.addresses.potMint,
@@ -76,6 +84,7 @@ class Participant {
         nftMetadata: this.nftMetadata,
         potAccount,
         devAccount,
+        creatorAccount,
         playerAccount,
         playerNftTokenAccount,
       })

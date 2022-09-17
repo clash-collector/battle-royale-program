@@ -31,6 +31,7 @@ describe("Participant action", () => {
   let entryFee = new anchor.BN(100);
   let attack = 50;
   let defense = 50;
+  let creatorFee = 100;
   let actionPointsPerDay = 8640000;
   let collectionInfo: CollectionInfo;
 
@@ -104,11 +105,14 @@ describe("Participant action", () => {
     await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
     // Create the battleground
+    creatorFee = 100;
     battleground = await battleRoyale.createBattleground(
       collectionInfo,
       potMint,
       participantsCap,
       entryFee,
+      creator.publicKey,
+      creatorFee,
       actionPointsPerDay
     );
 

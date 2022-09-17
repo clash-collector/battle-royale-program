@@ -2,6 +2,9 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum BattleRoyaleError {
+    #[msg("Invalid parameter")]
+    InvalidParameter,
+
     #[msg("Invalid statistics")]
     InvalidStatistics,
 

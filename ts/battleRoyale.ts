@@ -8,11 +8,13 @@ import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
 import Battleground from "./battleground";
 import { Program } from "@project-serum/anchor";
 
+export interface BattleRoyaleAddresses {
+  battleRoyale: anchor.web3.PublicKey;
+}
+
 class BattleRoyale {
   program: Program<BattleRoyaleProgram>;
-  addresses: {
-    battleRoyale: anchor.web3.PublicKey;
-  };
+  addresses: BattleRoyaleAddresses;
   state?: BattleRoyaleAccount;
 
   constructor(provider: anchor.AnchorProvider) {
@@ -41,15 +43,18 @@ class BattleRoyale {
     potMint: anchor.web3.PublicKey,
     participantsCap: number,
     entryFee: anchor.BN,
+    creator: anchor.web3.PublicKey,
+    creatorFee: number,
     actionPointsPerDay: number,
     whitelistRoot: number[] | null = null
   ) {
     const id = (await this.getBattleRoyaleState()).lastBattlegroundId.toNumber();
-    const battleground = new Battleground(this, id, potMint, this.program.provider);
+    const battleground = new Battleground(this, id, potMint, creator, this.program.provider);
     await battleground.create(
       collectionInfo,
       participantsCap,
       entryFee,
+      creatorFee,
       actionPointsPerDay,
       whitelistRoot
     );

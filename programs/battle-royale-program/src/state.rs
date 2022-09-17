@@ -41,12 +41,14 @@ pub struct BattlegroundState {
     pub status: BattlegroundStatus,
     pub pot_mint: Pubkey,
     pub entry_fee: u64,
+    pub creator: Pubkey,
+    pub creator_fee: u16,
     pub last_winner: Option<Pubkey>,
     pub whitelist_root: Option<[u8; 32]>,
 }
 
 impl BattlegroundState {
-    pub const LEN: usize = 8 + 1 + 8 + (CollectionInfo::LEN) + 4 + 4 + 2 + 32 + 8 + 2 * 33;
+    pub const LEN: usize = 8 + 1 + 8 + (CollectionInfo::LEN) + 4 + 4 + 2 + 32 + 4 + 32 + 8 + 2 * 33;
 }
 
 #[account]

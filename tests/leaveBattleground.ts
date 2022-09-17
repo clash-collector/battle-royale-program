@@ -27,6 +27,7 @@ describe("Leave Battleground", () => {
   let participantsCap = 2;
   let initialAmount = 10000;
   let entryFee = new anchor.BN(100);
+  let creatorFee = 100;
   let attack = 50;
   let defense = 50;
   let actionPointsPerDay = 8640000;
@@ -101,12 +102,16 @@ describe("Leave Battleground", () => {
     fee = 100;
     await battleRoyale.initialize(gameMaster.publicKey, gameMaster.publicKey, fee);
 
+    creatorFee = 100;
+
     // Create the battleground
     battleground = await battleRoyale.createBattleground(
       collectionInfo,
       potMint,
       participantsCap,
       entryFee,
+      creator.publicKey,
+      creatorFee,
       actionPointsPerDay
     );
 

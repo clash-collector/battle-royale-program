@@ -5,29 +5,33 @@ import {
   BATTLEGROUND_STATE_SEEDS,
   BATTLE_ROYALE_PROGRAM_ID,
 } from "./constants";
+import BattleRoyale, { BattleRoyaleAddresses } from "./battleRoyale";
 
-import BattleRoyale from "./battleRoyale";
 import BattleRoyaleIdl from "../target/idl/battle_royale_program.json";
 import { BattleRoyaleProgram } from "../target/types/battle_royale_program";
 import { CollectionInfo } from "./types";
 import Participant from "./participant";
 import { Program } from "@project-serum/anchor";
 
+export interface BattlegroundAddresses extends BattleRoyaleAddresses {
+  battleRoyale: anchor.web3.PublicKey;
+  authority: anchor.web3.PublicKey;
+  creator: anchor.web3.PublicKey;
+  battleground: anchor.web3.PublicKey;
+  potMint: anchor.web3.PublicKey;
+}
+
 class Battleground {
   program: Program<BattleRoyaleProgram>;
   battleRoyale: BattleRoyale;
   id: number;
-  addresses: {
-    battleRoyale: anchor.web3.PublicKey;
-    authority: anchor.web3.PublicKey;
-    battleground: anchor.web3.PublicKey;
-    potMint: anchor.web3.PublicKey;
-  };
+  addresses: BattlegroundAddresses;
 
   constructor(
     battleRoyale: BattleRoyale,
     id: number,
     potMint: anchor.web3.PublicKey,
+    creator: anchor.web3.PublicKey,
     provider: anchor.Provider
   ) {
     this.connect(provider);
@@ -39,6 +43,7 @@ class Battleground {
         [BATTLEGROUND_AUTHORITY_SEEDS, new anchor.BN(id).toBuffer("le", 8)],
         BATTLE_ROYALE_PROGRAM_ID
       )[0],
+      creator,
       battleground: anchor.web3.PublicKey.findProgramAddressSync(
         [BATTLEGROUND_STATE_SEEDS, new anchor.BN(id).toBuffer("le", 8)],
         BATTLE_ROYALE_PROGRAM_ID
@@ -51,6 +56,7 @@ class Battleground {
     collectionInfo: CollectionInfo,
     participantsCap: number,
     entryFee: anchor.BN,
+    creatorFee: number,
     actionPointsPerDay: number,
     whitelistRoot: number[] | null = null
   ) {
@@ -59,12 +65,14 @@ class Battleground {
         collectionInfo as any,
         participantsCap,
         entryFee,
+        this.addresses.creator,
+        creatorFee,
         actionPointsPerDay,
         whitelistRoot
       )
       .accounts({
         signer: this.program.provider.publicKey,
-        battleRoyaleState: this.addresses.battleRoyale,
+        battleRoyale: this.addresses.battleRoyale,
         potMint: this.addresses.potMint,
       })
       .rpc();

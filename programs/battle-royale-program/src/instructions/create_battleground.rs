@@ -12,9 +12,16 @@ pub fn create_battleground(
     collection_info: CollectionInfo,
     participants_cap: u32,
     entry_fee: u64,
+    creator: Pubkey,
+    creator_fee: u16,
     action_points_per_day: u32,
     whitelist_root: Option<[u8; 32]>,
 ) -> Result<()> {
+    require!(
+        creator_fee + ctx.accounts.battle_royale.fee < 10000,
+        BattleRoyaleError::InvalidParameter
+    );
+
     match collection_info {
         CollectionInfo::V1 {
             ref symbol,
@@ -38,9 +45,9 @@ pub fn create_battleground(
     };
 
     // Initialize the battleground account
-    *ctx.accounts.battleground_state = BattlegroundState {
-        bump: *ctx.bumps.get("battleground_state").unwrap(),
-        id: ctx.accounts.battle_royale_state.last_battleground_id,
+    *ctx.accounts.battleground = BattlegroundState {
+        bump: *ctx.bumps.get("battleground").unwrap(),
+        id: ctx.accounts.battle_royale.last_battleground_id,
         collection_info,
         start_time: 0,
         action_points_per_day,
@@ -49,14 +56,16 @@ pub fn create_battleground(
         status: BattlegroundStatus::Preparing,
         pot_mint: ctx.accounts.pot_mint.key(),
         entry_fee,
+        creator,
+        creator_fee,
         last_winner: None,
         whitelist_root,
     };
 
-    ctx.accounts.battle_royale_state.last_battleground_id += 1;
+    ctx.accounts.battle_royale.last_battleground_id += 1;
 
     emit!(CreateBattlegroundEvent {
-        battleground: ctx.accounts.battleground_state.key()
+        battleground: ctx.accounts.battleground.key()
     });
 
     Ok(())
@@ -76,14 +85,14 @@ pub struct CreateBattleground<'info> {
         ],
         bump,
     )]
-    pub battle_royale_state: Account<'info, BattleRoyaleState>,
+    pub battle_royale: Account<'info, BattleRoyaleState>,
 
     /// The authority that holds the pot
     /// CHECK: Checking correspondance with battle royale state
     #[account(
         seeds = [
             BATTLEGROUND_AUTHORITY_SEEDS.as_bytes(),
-            battle_royale_state.last_battleground_id.to_le_bytes().as_ref()
+            battle_royale.last_battleground_id.to_le_bytes().as_ref()
         ],
         bump,
     )]
@@ -96,11 +105,11 @@ pub struct CreateBattleground<'info> {
         space = BattlegroundState::LEN,
         seeds = [
             BATTLEGROUND_STATE_SEEDS.as_bytes(),
-            battle_royale_state.last_battleground_id.to_le_bytes().as_ref()
+            battle_royale.last_battleground_id.to_le_bytes().as_ref()
         ],
         bump,
     )]
-    pub battleground_state: Account<'info, BattlegroundState>,
+    pub battleground: Account<'info, BattlegroundState>,
 
     /// The mint of the token used to pay the entry fee
     #[account(owner = token::ID)]

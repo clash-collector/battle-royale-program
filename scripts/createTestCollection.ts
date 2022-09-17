@@ -33,6 +33,8 @@ export default async function main() {
       mint,
       2,
       new BN(10 ** 7),
+      gameMaster.publicKey,
+      100,
       10000
     );
   }
